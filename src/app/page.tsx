@@ -2,210 +2,228 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { signIn, useSession, signOut } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useSession, signIn, signOut } from 'next-auth/react';
 import { SUPPORTED_LANGUAGES, LanguageOption } from '@/lib/languages';
+import BuddyMascot from '@/components/BuddyMascot';
 import './landing.css';
 
 export default function LandingPage() {
-  const router = useRouter();
   const { data: session, status } = useSession();
 
-  // Authentication Tab: 'login' | 'register'
-  const [authTab, setAuthTab] = useState<'login' | 'register'>('login');
+  // Language Dropdown state
+  const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
+  const [selectedLang, setSelectedLang] = useState<LanguageOption>(SUPPORTED_LANGUAGES[0]);
 
-  // Form Fields
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
+  // Auth Card state
+  const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
+
+  // Register Form state
+  const [registerName, setRegisterName] = useState('');
+  const [registerEmail, setRegisterEmail] = useState('');
+  const [registerPassword, setRegisterPassword] = useState('');
+  const [registerConfirmPassword, setRegisterConfirmPassword] = useState('');
 
   // Status & Feedback
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState('');
+  const [aadhaarLoading, setAadhaarLoading] = useState(false);
+  const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
-  // Language Dropdown
-  const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
-  const [selectedLang, setSelectedLang] = useState<LanguageOption>(SUPPORTED_LANGUAGES[0]);
-
-  // Handle Login Submit
-  const handleLogin = async (e: React.FormEvent) => {
+  // 1. Submit Login Handler
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMsg('');
+    setError('');
     setSuccessMsg('');
 
-    if (!email.trim() || !password) {
-      setErrorMsg('Please enter both your email address and password.');
+    if (!loginEmail || !loginPassword) {
+      setError('Please enter both your email and password.');
       return;
     }
 
     setLoading(true);
+
     try {
-      const res = await signIn('credentials', {
+      const result = await signIn('credentials', {
         redirect: false,
-        email: email.trim(),
-        password,
+        email: loginEmail.trim(),
+        password: loginPassword,
       });
 
-      if (res?.error) {
-        setErrorMsg(
-          res.error === 'CredentialsSignin'
-            ? 'Invalid email or password. Please try again.'
-            : res.error
+      if (result?.error) {
+        setError(
+          result.error === 'CredentialsSignin'
+            ? 'Invalid email or password.'
+            : result.error
         );
         setLoading(false);
       } else {
-        setSuccessMsg('Signed in successfully! Redirecting...');
-        setTimeout(() => {
-          window.location.href = '/dashboard';
-        }, 300);
+        window.location.href = '/dashboard';
       }
-    } catch (err: any) {
-      setErrorMsg(err?.message || 'Login failed. Please check your credentials.');
+    } catch {
+      setError('An unexpected error occurred. Please try again.');
       setLoading(false);
     }
   };
 
-  // Handle Registration Submit
-  const handleRegister = async (e: React.FormEvent) => {
+  // 2. Submit Register Handler
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMsg('');
+    setError('');
     setSuccessMsg('');
 
-    if (!name.trim() || !email.trim() || !password) {
-      setErrorMsg('Please fill in your name, email address, and password.');
+    if (!registerName || !registerEmail || !registerPassword) {
+      setError('Please fill in all required fields.');
       return;
     }
 
-    if (password.length < 8) {
-      setErrorMsg('Password must be at least 8 characters long.');
+    if (registerPassword !== registerConfirmPassword) {
+      setError('Passwords do not match.');
       return;
     }
 
     setLoading(true);
+
     try {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: name.trim(),
-          email: email.trim(),
-          password,
+          name: registerName.trim(),
+          email: registerEmail.trim(),
+          password: registerPassword,
         }),
       });
 
       const data = await res.json();
+
       if (!res.ok) {
-        setErrorMsg(data.error || 'Registration failed. Please try again.');
+        setError(data.error || 'Registration failed.');
         setLoading(false);
-        return;
-      }
-
-      setSuccessMsg('Account created successfully! Logging you in...');
-      const loginRes = await signIn('credentials', {
-        redirect: false,
-        email: email.trim(),
-        password,
-      });
-
-      if (loginRes?.error) {
-        window.location.href = '/login';
       } else {
-        window.location.href = '/dashboard';
+        setSuccessMsg('Account created successfully! Signing in...');
+        const loginRes = await signIn('credentials', {
+          redirect: false,
+          email: registerEmail.trim(),
+          password: registerPassword,
+        });
+
+        if (!loginRes?.error) {
+          window.location.href = '/dashboard';
+        } else {
+          setActiveTab('login');
+          setLoginEmail(registerEmail);
+          setLoading(false);
+        }
       }
     } catch {
-      setErrorMsg('Network error. Please try again.');
+      setError('An error occurred during registration. Please try again.');
       setLoading(false);
     }
   };
 
-  // Handle Google Sign In
+  // 3. Google OAuth Handler
   const handleGoogleSignIn = async () => {
-    setErrorMsg('');
+    setError('');
     setGoogleLoading(true);
     try {
       await signIn('google', { callbackUrl: '/dashboard' });
     } catch {
-      setErrorMsg('Google sign in initiation failed. Please try again.');
+      setError('Failed to initiate Google sign in. Please try again.');
       setGoogleLoading(false);
     }
   };
 
-  return (
-    <div className="landing-page-wrapper">
-      {/* ─────────────────────────────────────────────────────────────
-          1. TOP NAVIGATION HEADER
-          ───────────────────────────────────────────────────────────── */}
-      <header className="top-header-bar">
-        <div className="top-header-inner">
-          <Link href="/" className="brand-section">
-            {/* Mascot Robot Icon in white circular badge */}
-            <div
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: '50%',
-                background: '#ffffff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-                flexShrink: 0,
-              }}
-            >
-              <svg width="26" height="26" viewBox="0 0 32 32" fill="none">
-                <rect x="6" y="9" width="20" height="15" rx="5" fill="#4a0e17" />
-                <circle cx="16" cy="4" r="2" fill="#4a0e17" />
-                <line x1="16" y1="5.5" x2="16" y2="9" stroke="#4a0e17" strokeWidth="2" strokeLinecap="round" />
-                <rect x="3" y="13" width="3" height="7" rx="1.5" fill="#4a0e17" />
-                <rect x="26" y="13" width="3" height="7" rx="1.5" fill="#4a0e17" />
-                <rect x="9" y="12" width="14" height="6" rx="2" fill="#ffffff" />
-                <circle cx="12" cy="15" r="1.5" fill="#4a0e17" />
-                <circle cx="20" cy="15" r="1.5" fill="#4a0e17" />
-                <rect x="13.5" y="20.5" width="5" height="1.5" rx="0.75" fill="#ffffff" />
-              </svg>
-            </div>
+  // 4. Aadhaar Sandbox Gateway Handler
+  const handleAadhaarClick = () => {
+    setAadhaarLoading(true);
+    setTimeout(() => {
+      setError('Aadhaar OTP gateway is currently initializing in sandbox mode. Please sign in with email or Google.');
+      setAadhaarLoading(false);
+    }, 600);
+  };
 
-            <div className="brand-text-col">
-              <span className="brand-title-text">TechForm Buddy</span>
-              <span className="brand-subtitle-text">Your AI Form &amp; Service Assistant</span>
+  return (
+    <div className="landing-page-root">
+      {/* ─────────────────────────────────────────────────────────────
+          1. NAVIGATION BAR (DEEP BURGUNDY · MATCHING SCREENSHOT)
+          ───────────────────────────────────────────────────────────── */}
+      <header className="lp-navbar">
+        <div className="lp-nav-container">
+          {/* Brand Logo & Name */}
+          <Link href="/" className="lp-brand-link">
+            <div className="lp-brand-circle">
+              <BuddyMascot size={26} state="idle" />
+            </div>
+            <div className="lp-brand-title">
+              <span>TechForm Buddy</span>
+              <span className="lp-brand-subtitle">Your AI Form &amp; Service Assistant</span>
             </div>
           </Link>
 
-          <div className="header-right-actions">
-            <span className="header-tagline-text">Smart • Simple • Multilingual</span>
+          {/* Right Actions: Tagline & Language Selector */}
+          <div className="lp-nav-actions">
+            <span className="lp-nav-tagline">Smart • Simple • Multilingual</span>
 
-            {/* Language Selector Dropdown */}
+            {/* Language Selector */}
             <div style={{ position: 'relative' }}>
               <button
                 type="button"
-                className="lang-selector-btn"
+                className="lp-lang-btn"
                 onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
                 aria-expanded={isLangMenuOpen}
                 aria-label="Select Language"
               >
                 <span>🌐</span>
                 <span>{selectedLang.nativeName}</span>
-                <span style={{ fontSize: '10px' }}>▼</span>
+                <span style={{ fontSize: '9px', opacity: 0.8 }}>▼</span>
               </button>
 
               {isLangMenuOpen && (
-                <div className="lang-dropdown-menu">
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: 'calc(100% + 8px)',
+                    right: 0,
+                    background: '#ffffff',
+                    border: '1px solid #e0d4c5',
+                    borderRadius: '12px',
+                    boxShadow: '0 12px 30px rgba(53, 4, 7, 0.25)',
+                    padding: '6px',
+                    minWidth: '170px',
+                    zIndex: 200,
+                  }}
+                >
                   {SUPPORTED_LANGUAGES.map((lang) => (
                     <button
                       key={lang.code}
                       type="button"
-                      className={`lang-dropdown-item ${selectedLang.code === lang.code ? 'active' : ''}`}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        width: '100%',
+                        padding: '8px 12px',
+                        background: selectedLang.code === lang.code ? '#fbeee9' : 'transparent',
+                        color: selectedLang.code === lang.code ? '#590907' : '#29211f',
+                        fontWeight: selectedLang.code === lang.code ? 700 : 500,
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontSize: '13px',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                      }}
                       onClick={() => {
                         setSelectedLang(lang);
                         setIsLangMenuOpen(false);
                       }}
                     >
                       <span>{lang.nativeName}</span>
-                      <span style={{ fontSize: '10px', opacity: 0.6 }}>{lang.code.toUpperCase()}</span>
+                      <span style={{ fontSize: '10px', color: '#a5a79b' }}>{lang.code.toUpperCase()}</span>
                     </button>
                   ))}
                 </div>
@@ -216,148 +234,131 @@ export default function LandingPage() {
       </header>
 
       {/* ─────────────────────────────────────────────────────────────
-          2. HERO SECTION — VIKRANT UNIVERSITY CAMPUS BACKDROP
+          2. IMMERSIVE HERO SECTION WITH VIKRANT UNIVERSITY BACKDROP
+             TWO-COLUMN SPLIT: HERO CONTENT (LEFT) + AUTH CARD (RIGHT)
           ───────────────────────────────────────────────────────────── */}
-      <section className="hero-university-section">
-        {/* Dark Maroon / Vignette Overlay */}
-        <div className="hero-backdrop-overlay" />
+      <section id="hero" className="lp-hero-section">
+        <div className="lp-hero-overlay" />
+        <div className="lp-hero-glow-1" />
+        <div className="lp-hero-glow-2" />
 
-        <div className="hero-main-container">
-          {/* Left Column: Headline, Subtitle, Feature Badges & Tagline */}
-          <div className="hero-left-column">
-            {/* Pill Badge */}
-            <div className="hero-badge-pill">
+        <div className="lp-hero-layout">
+          {/* ─────────────────────────────────────────────────────────
+              LEFT COLUMN — BRANDING, HEADLINE, 4 PILLS, DIVIDER
+              ───────────────────────────────────────────────────────── */}
+          <div className="lp-hero-left">
+            {/* Top Pill Badge */}
+            <div className="lp-badge-pill">
               <span>🎓</span>
               <span>Empowering Citizens • Enabling Digital India</span>
             </div>
 
-            {/* Main Headline */}
-            <h1 className="hero-main-headline">
-              TechForm Buddy<br />
-              Your Smart Companion for<br />
-              <span className="hero-headline-gold">Forms, Services &amp;<br />Digital Assistance</span>
+            {/* Main 4-Line Heading */}
+            <h1 className="lp-hero-heading">
+              <span className="lp-title-white">TechForm Buddy</span>
+              <span className="lp-title-white">Your Smart Companion for</span>
+              <span className="lp-title-orange">Forms, Services &amp;</span>
+              <span className="lp-title-orange">Digital Assistance</span>
             </h1>
 
             {/* Subtitle */}
-            <p className="hero-description-text">
+            <p className="lp-hero-subtext">
               Powered by AI. Available in Multiple Languages.<br />
               Designed for Every Indian Citizen.
             </p>
 
-            {/* 4 Feature Pills Row */}
-            <div className="feature-pills-row">
-              <div className="feature-pill-card">
-                <div className="feature-pill-icon">⚡</div>
-                <div className="feature-pill-label">Auto<br />Form Fill</div>
+            {/* 4 Feature Pills in a Row */}
+            <div className="lp-hero-pills">
+              <div className="lp-hero-pill">
+                <div className="lp-pill-icon-circle">⚡</div>
+                <div className="lp-pill-text-wrap">
+                  <span className="lp-pill-title">Auto</span>
+                  <span className="lp-pill-sub">Form Fill</span>
+                </div>
               </div>
 
-              <div className="feature-pill-card">
-                <div className="feature-pill-icon">🔍</div>
-                <div className="feature-pill-label">Smart<br />Search</div>
+              <div className="lp-hero-pill">
+                <div className="lp-pill-icon-circle">🔍</div>
+                <div className="lp-pill-text-wrap">
+                  <span className="lp-pill-title">Smart</span>
+                  <span className="lp-pill-sub">Search</span>
+                </div>
               </div>
 
-              <div className="feature-pill-card">
-                <div className="feature-pill-icon">📄</div>
-                <div className="feature-pill-label">Document<br />Helper</div>
+              <div className="lp-hero-pill">
+                <div className="lp-pill-icon-circle">📄</div>
+                <div className="lp-pill-text-wrap">
+                  <span className="lp-pill-title">Document</span>
+                  <span className="lp-pill-sub">Helper</span>
+                </div>
               </div>
 
-              <div className="feature-pill-card">
-                <div className="feature-pill-icon">🌐</div>
-                <div className="feature-pill-label">Multilingual<br />Support</div>
+              <div className="lp-hero-pill">
+                <div className="lp-pill-icon-circle">🌐</div>
+                <div className="lp-pill-text-wrap">
+                  <span className="lp-pill-title">Multilingual</span>
+                  <span className="lp-pill-sub">Support</span>
+                </div>
               </div>
             </div>
 
-            {/* Tagline Divider */}
-            <div className="hero-tagline-divider">
-              <div className="tagline-line" />
-              <span className="tagline-text">Your Digital Assistant, Always With You</span>
-              <div className="tagline-line right" />
+            {/* Divider with Italic Text */}
+            <div className="lp-hero-quote">
+              <span className="lp-divider-line" />
+              <span className="lp-divider-text">Your Digital Assistant, Always With You</span>
+              <span className="lp-divider-line" />
             </div>
           </div>
 
-          {/* Right Column: Floating White Authentication Card */}
-          <div className="hero-right-column">
-            <div className="auth-floating-card">
-              {/* Authenticated State */}
+          {/* ─────────────────────────────────────────────────────────
+              RIGHT COLUMN — FLOATING AUTH CARD
+              ───────────────────────────────────────────────────────── */}
+          <div className="lp-hero-right">
+            <div className="lp-auth-card">
+              {/* Card Header */}
+              <div className="lp-card-header">
+                <div className="lp-card-mascot-box">
+                  <BuddyMascot size={36} state="idle" />
+                </div>
+                <div className="lp-card-header-titles">
+                  <span className="lp-card-welcome">Welcome to</span>
+                  <span className="lp-card-brand-name">TechForm Buddy</span>
+                </div>
+              </div>
+
               {status === 'authenticated' && session?.user ? (
-                <div style={{ textAlign: 'center', padding: '16px 0' }}>
-                  <div
-                    style={{
-                      width: 56,
-                      height: 56,
-                      borderRadius: '50%',
-                      background: '#fdf2f4',
-                      border: '2px solid #fecdd3',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      margin: '0 auto 12px auto',
-                    }}
-                  >
-                    <span style={{ fontSize: '24px' }}>👋</span>
-                  </div>
-                  <h3 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--maroon-darkest)', margin: '0 0 6px 0' }}>
-                    Welcome back, {session.user.name || 'Citizen'}!
-                  </h3>
-                  <p style={{ fontSize: '13px', color: '#6b7280', margin: '0 0 20px 0' }}>
-                    You are signed in to TechForm Buddy.
+                <div className="lp-card-auth-state">
+                  <p className="lp-card-subtitle" style={{ margin: '14px 0 16px' }}>
+                    Signed in as <strong>{session.user.name || session.user.email}</strong>
                   </p>
-                  <Link
-                    href="/dashboard"
-                    className="auth-submit-btn"
-                    style={{ textDecoration: 'none', marginBottom: '10px' }}
-                  >
+                  <Link href="/dashboard" className="lp-card-submit-btn" style={{ textDecoration: 'none' }}>
                     Go to Dashboard →
                   </Link>
                   <button
                     type="button"
                     onClick={() => signOut({ callbackUrl: '/' })}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: 'var(--maroon-primary)',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                    }}
+                    className="lp-social-btn"
+                    style={{ marginTop: '10px' }}
                   >
-                    Sign out
+                    Sign Out
                   </button>
                 </div>
               ) : (
                 <>
-                  {/* Card Header with Robot Mascot */}
-                  <div className="card-header-block">
-                    <div className="card-header-robot">
-                      <svg width="26" height="26" viewBox="0 0 32 32" fill="none">
-                        <rect x="6" y="9" width="20" height="15" rx="5" fill="#4a0e17" />
-                        <circle cx="16" cy="4" r="2" fill="#4a0e17" />
-                        <line x1="16" y1="5.5" x2="16" y2="9" stroke="#4a0e17" strokeWidth="2" strokeLinecap="round" />
-                        <rect x="3" y="13" width="3" height="7" rx="1.5" fill="#4a0e17" />
-                        <rect x="26" y="13" width="3" height="7" rx="1.5" fill="#4a0e17" />
-                        <rect x="9" y="12" width="14" height="6" rx="2" fill="#ffffff" />
-                        <circle cx="12" cy="15" r="1.5" fill="#4a0e17" />
-                        <circle cx="20" cy="15" r="1.5" fill="#4a0e17" />
-                        <rect x="13.5" y="20.5" width="5" height="1.5" rx="0.75" fill="#ffffff" />
-                      </svg>
-                    </div>
+                  <p className="lp-card-subtitle">
+                    {activeTab === 'login'
+                      ? 'Sign in to continue your journey'
+                      : 'Register to start your digital journey'}
+                  </p>
 
-                    <div>
-                      <div className="card-title-text">Welcome to<br />TechForm Buddy</div>
-                      <div className="card-subtitle-text">
-                        {authTab === 'login' ? 'Sign in to continue your journey' : 'Create an account in 30 seconds'}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Segmented Tabs: [ Login ] | [ Register ] */}
-                  <div className="auth-tabs-toggle">
+                  {/* Mode Tabs: [ Login ] [ Register ] */}
+                  <div className="lp-card-tabs">
                     <button
                       type="button"
-                      className={`auth-tab-btn ${authTab === 'login' ? 'active' : ''}`}
+                      className={`lp-card-tab ${activeTab === 'login' ? 'active' : ''}`}
                       onClick={() => {
-                        setAuthTab('login');
-                        setErrorMsg('');
+                        setActiveTab('login');
+                        setError('');
                         setSuccessMsg('');
                       }}
                     >
@@ -365,10 +366,10 @@ export default function LandingPage() {
                     </button>
                     <button
                       type="button"
-                      className={`auth-tab-btn ${authTab === 'register' ? 'active' : ''}`}
+                      className={`lp-card-tab ${activeTab === 'register' ? 'active' : ''}`}
                       onClick={() => {
-                        setAuthTab('register');
-                        setErrorMsg('');
+                        setActiveTab('register');
+                        setError('');
                         setSuccessMsg('');
                       }}
                     >
@@ -376,210 +377,209 @@ export default function LandingPage() {
                     </button>
                   </div>
 
-                  {/* Feedback Banners */}
-                  {errorMsg && <div className="auth-card-error">⚠️ {errorMsg}</div>}
-                  {successMsg && <div className="auth-card-success">✓ {successMsg}</div>}
+                  {error && (
+                    <div className="lp-card-error">
+                      <span>⚠️</span>
+                      <span>{error}</span>
+                    </div>
+                  )}
 
-                  {/* LOGIN FORM */}
-                  {authTab === 'login' && (
-                    <form onSubmit={handleLogin} className="auth-form-body">
-                      {/* Email input with Mail Icon */}
-                      <div className="auth-input-wrapper">
-                        <svg className="auth-input-icon" viewBox="0 0 20 20" fill="currentColor">
-                          <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
-                          <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
-                        </svg>
+                  {successMsg && (
+                    <div className="lp-card-success">
+                      <span>✓</span>
+                      <span>{successMsg}</span>
+                    </div>
+                  )}
+
+                  {activeTab === 'login' ? (
+                    <form onSubmit={handleLoginSubmit}>
+                      {/* Email Input */}
+                      <div className="lp-input-group">
+                        <span className="lp-input-icon">✉</span>
                         <input
                           type="email"
-                          className="auth-text-field"
+                          className="lp-input"
                           placeholder="Enter your email address"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
+                          value={loginEmail}
+                          onChange={(e) => setLoginEmail(e.target.value)}
                           required
-                          disabled={loading}
+                          autoComplete="email"
                         />
                       </div>
 
-                      {/* Password input with Lock Icon and Eye Toggle */}
-                      <div className="auth-input-wrapper">
-                        <svg className="auth-input-icon" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                        </svg>
+                      {/* Password Input */}
+                      <div className="lp-input-group">
+                        <span className="lp-input-icon">🔒</span>
                         <input
                           type={showPassword ? 'text' : 'password'}
-                          className="auth-text-field"
+                          className="lp-input"
                           placeholder="Enter your password"
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
+                          value={loginPassword}
+                          onChange={(e) => setLoginPassword(e.target.value)}
                           required
-                          disabled={loading}
+                          autoComplete="current-password"
+                          style={{ paddingRight: '38px' }}
                         />
                         <button
                           type="button"
-                          className="auth-password-toggle-btn"
+                          className="lp-eye-btn"
                           onClick={() => setShowPassword(!showPassword)}
                           aria-label={showPassword ? 'Hide password' : 'Show password'}
                         >
-                          {showPassword ? (
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                              <line x1="1" y1="1" x2="23" y2="23" />
-                            </svg>
-                          ) : (
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                              <circle cx="12" cy="12" r="3" />
-                            </svg>
-                          )}
+                          {showPassword ? '🙈' : '👁'}
                         </button>
                       </div>
 
-                      {/* Options Row: Remember Me & Forgot Password */}
-                      <div className="auth-options-row">
-                        <label className="remember-checkbox-label">
+                      {/* Remember Me & Forgot Password */}
+                      <div className="lp-card-helper-row">
+                        <label className="lp-remember-label">
                           <input
                             type="checkbox"
+                            className="lp-remember-checkbox"
                             checked={rememberMe}
                             onChange={(e) => setRememberMe(e.target.checked)}
                           />
-                          <span>Remember me</span>
+                          Remember me
                         </label>
-
-                        <Link href="/login" className="forgot-password-link">
+                        <Link href="/login" className="lp-forgot-link">
                           Forgot password?
                         </Link>
                       </div>
 
-                      {/* Primary Submit Button */}
-                      <button type="submit" className="auth-submit-btn" disabled={loading}>
+                      {/* Login Button */}
+                      <button type="submit" className="lp-card-submit-btn" disabled={loading}>
                         {loading ? 'Signing in...' : 'Login →'}
                       </button>
                     </form>
-                  )}
-
-                  {/* REGISTER FORM */}
-                  {authTab === 'register' && (
-                    <form onSubmit={handleRegister} className="auth-form-body">
-                      {/* Name input */}
-                      <div className="auth-input-wrapper">
-                        <svg className="auth-input-icon" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                        </svg>
+                  ) : (
+                    <form onSubmit={handleRegisterSubmit}>
+                      {/* Name Input */}
+                      <div className="lp-input-group">
+                        <span className="lp-input-icon">👤</span>
                         <input
                           type="text"
-                          className="auth-text-field"
+                          className="lp-input"
                           placeholder="Enter your full name"
-                          value={name}
-                          onChange={(e) => setName(e.target.value)}
+                          value={registerName}
+                          onChange={(e) => setRegisterName(e.target.value)}
                           required
-                          disabled={loading}
                         />
                       </div>
 
-                      {/* Email input */}
-                      <div className="auth-input-wrapper">
-                        <svg className="auth-input-icon" viewBox="0 0 20 20" fill="currentColor">
-                          <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
-                          <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
-                        </svg>
+                      {/* Email Input */}
+                      <div className="lp-input-group">
+                        <span className="lp-input-icon">✉</span>
                         <input
                           type="email"
-                          className="auth-text-field"
+                          className="lp-input"
                           placeholder="Enter your email address"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
+                          value={registerEmail}
+                          onChange={(e) => setRegisterEmail(e.target.value)}
                           required
-                          disabled={loading}
                         />
                       </div>
 
-                      {/* Password input */}
-                      <div className="auth-input-wrapper">
-                        <svg className="auth-input-icon" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                        </svg>
+                      {/* Password Input */}
+                      <div className="lp-input-group">
+                        <span className="lp-input-icon">🔒</span>
                         <input
                           type={showPassword ? 'text' : 'password'}
-                          className="auth-text-field"
-                          placeholder="Create a strong password (min 8 chars)"
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
+                          className="lp-input"
+                          placeholder="Create a strong password"
+                          value={registerPassword}
+                          onChange={(e) => setRegisterPassword(e.target.value)}
                           required
-                          disabled={loading}
+                          style={{ paddingRight: '38px' }}
                         />
                         <button
                           type="button"
-                          className="auth-password-toggle-btn"
+                          className="lp-eye-btn"
                           onClick={() => setShowPassword(!showPassword)}
                           aria-label={showPassword ? 'Hide password' : 'Show password'}
                         >
-                          {showPassword ? (
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                              <line x1="1" y1="1" x2="23" y2="23" />
-                            </svg>
-                          ) : (
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                              <circle cx="12" cy="12" r="3" />
-                            </svg>
-                          )}
+                          {showPassword ? '🙈' : '👁'}
                         </button>
                       </div>
 
-                      {/* Primary Register Button */}
-                      <button type="submit" className="auth-submit-btn" disabled={loading}>
-                        {loading ? 'Creating Account...' : 'Register →'}
+                      {/* Confirm Password */}
+                      <div className="lp-input-group">
+                        <span className="lp-input-icon">🔒</span>
+                        <input
+                          type={showPassword ? 'text' : 'password'}
+                          className="lp-input"
+                          placeholder="Confirm your password"
+                          value={registerConfirmPassword}
+                          onChange={(e) => setRegisterConfirmPassword(e.target.value)}
+                          required
+                        />
+                      </div>
+
+                      {/* Register Button */}
+                      <button type="submit" className="lp-card-submit-btn" disabled={loading}>
+                        {loading ? 'Creating account...' : 'Register Account →'}
                       </button>
                     </form>
                   )}
 
-                  {/* Divider "or" */}
-                  <div className="auth-or-divider">
-                    <div className="divider-line" />
-                    <span className="divider-text">or</span>
-                    <div className="divider-line" />
+                  {/* Divider: or */}
+                  <div className="lp-card-divider">
+                    <span className="lp-card-divider-line" />
+                    <span>or</span>
+                    <span className="lp-card-divider-line" />
                   </div>
 
-                  {/* Social Buttons: Google & Aadhaar */}
-                  <div className="auth-social-buttons">
-                    <button
-                      type="button"
-                      className="auth-social-btn"
-                      onClick={handleGoogleSignIn}
-                      disabled={googleLoading || loading}
-                    >
-                      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                        <path d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84c-.21 1.13-.84 2.08-1.8 2.72v2.26h2.91c1.7-1.57 2.69-3.87 2.69-6.62z" fill="#4285F4"/>
-                        <path d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.91-2.26c-.8.54-1.83.86-3.05.86-2.34 0-4.32-1.58-5.03-3.71H.96v2.33C2.44 15.98 5.48 18 9 18z" fill="#34A853"/>
-                        <path d="M3.97 10.71A5.41 5.41 0 013.68 9c0-.6.1-1.18.29-1.71V4.96H.96A8.99 8.99 0 000 9c0 1.45.35 2.82.96 4.04l3.01-2.33z" fill="#FBBC05"/>
-                        <path d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0 5.48 0 2.44 2.02.96 4.96l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z" fill="#EA4335"/>
-                      </svg>
-                      <span>Continue with Google</span>
-                    </button>
+                  {/* Continue with Google */}
+                  <button
+                    type="button"
+                    className="lp-social-btn"
+                    onClick={handleGoogleSignIn}
+                    disabled={googleLoading || loading}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                      <path
+                        d="M17.64 9.2045c0-.6381-.0573-1.2518-.1636-1.8409H9v3.4814h4.8436c-.2086 1.125-.8427 2.0782-1.7959 2.7164v2.2581h2.9087c1.7018-1.5668 2.6836-3.874 2.6836-6.615z"
+                        fill="#4285F4"
+                      />
+                      <path
+                        d="M9 18c2.43 0 4.4673-.806 5.9564-2.1805l-2.9087-2.2581c-.8059.54-1.8368.859-3.0477.859-2.344 0-4.3282-1.5831-5.036-3.7104H.9574v2.3318C2.4382 15.9832 5.4818 18 9 18z"
+                        fill="#34A853"
+                      />
+                      <path
+                        d="M3.964 10.71c-.18-.54-.2822-1.1168-.2822-1.71s.1022-1.17.2822-1.71V4.9582H.9573C.3477 6.1732 0 7.5477 0 9s.3477 2.8268.9573 4.0418L3.964 10.71z"
+                        fill="#FBBC05"
+                      />
+                      <path
+                        d="M9 3.5795c1.3214 0 2.5077.4541 3.4405 1.346l2.5813-2.5814C13.4632.9273 11.426 0 9 0 5.4818 0 2.4382 2.0168.9573 4.9582L3.964 7.29C4.6718 5.1627 6.656 3.5795 9 3.5795z"
+                        fill="#EA4335"
+                      />
+                    </svg>
+                    {googleLoading ? 'Connecting...' : 'Continue with Google'}
+                  </button>
 
-                    <button
-                      type="button"
-                      className="auth-social-btn"
-                      onClick={() => {
-                        window.location.href = '/login';
-                      }}
-                    >
-                      <svg width="22" height="18" viewBox="0 0 28 22" fill="none">
-                        <circle cx="14" cy="9" r="6" fill="#f97316" />
-                        <path d="M14 1v3M7 4l2 2M21 4l-2 2M4 9h3M21 9h3" stroke="#ea580c" strokeWidth="1.5" strokeLinecap="round" />
-                        <path d="M11 11a3 3 0 016 0c0 4-3 6-3 8" stroke="#dc2626" strokeWidth="1.5" strokeLinecap="round" />
-                        <path d="M8.5 13a5.5 5.5 0 0111 0c0 4-2.5 6-2.5 8" stroke="#ea580c" strokeWidth="1.2" strokeLinecap="round" />
-                      </svg>
-                      <span>Continue with Aadhaar</span>
-                    </button>
-                  </div>
+                  {/* Continue with Aadhaar */}
+                  <button
+                    type="button"
+                    className="lp-social-btn"
+                    onClick={handleAadhaarClick}
+                    disabled={aadhaarLoading || loading}
+                  >
+                    <svg width="22" height="18" viewBox="0 0 36 28" fill="none">
+                      <path d="M18 4a10 10 0 0 1 10 10" stroke="#f37021" strokeWidth="2.2" strokeLinecap="round" />
+                      <path d="M18 7a7 7 0 0 1 7 7" stroke="#e1251b" strokeWidth="2" strokeLinecap="round" />
+                      <path d="M18 10a4 4 0 0 1 4 4" stroke="#f37021" strokeWidth="1.8" strokeLinecap="round" />
+                      <circle cx="18" cy="14" r="1.5" fill="#e1251b" />
+                      <path d="M18 1v1.5M25 3l-1 1.2M31 8l-1.5.8M33 14h-1.5M7 3l1 1.2M1 8l1.5.8M3 14h1.5" stroke="#f37021" strokeWidth="1.6" strokeLinecap="round" />
+                      <path d="M10 22h16c1.5 0 2.5-1 2.5-2.5V17" stroke="#e1251b" strokeWidth="1.6" strokeLinecap="round" />
+                    </svg>
+                    {aadhaarLoading ? 'Connecting Gateway...' : 'Continue with Aadhaar'}
+                  </button>
 
-                  {/* Footer Security Badge */}
-                  <div className="auth-footer-badge">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                      <polyline points="9 12 11 14 15 10" />
+                  {/* Trust Badge */}
+                  <div className="lp-card-trust-badge">
+                    <svg width="15" height="15" viewBox="0 0 20 20" fill="none">
+                      <path d="M10 2l7 3v5c0 5-3.5 8.5-7 10-3.5-1.5-7-5-7-10V5l7-3z" fill="#2e7d32" opacity="0.15" />
+                      <path d="M10 2l7 3v5c0 5-3.5 8.5-7 10-3.5-1.5-7-5-7-10V5l7-3z" stroke="#2e7d32" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M7 10.5l2 2 4-4" stroke="#2e7d32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                     <span>Secure &amp; Trusted Platform</span>
                   </div>
@@ -591,94 +591,184 @@ export default function LandingPage() {
       </section>
 
       {/* ─────────────────────────────────────────────────────────────
-          3. COMPREHENSIVE FEATURES & CITIZEN CAPABILITIES
+          3. COMPREHENSIVE FEATURES SECTION (BURGUNDY & CREAM THEME)
           ───────────────────────────────────────────────────────────── */}
-      <section className="features-section-maroon">
-        <div className="section-container">
-          <div className="section-heading-block">
-            <span className="section-badge-maroon">Citizen Services &amp; AI Power</span>
-            <h2 className="section-title-maroon">Everything You Need for Public Digital Services</h2>
-            <p className="section-subtitle-maroon">
-              From college scholarships to civil grievance redressal, TechForm Buddy bridges the digital divide for every citizen.
+      <section id="features" className="lp-features-section">
+        <div className="lp-section-header">
+          <span className="lp-section-eyebrow">Enterprise Capabilities</span>
+          <h2 className="lp-section-title">Everything You Need for Seamless Citizen Services</h2>
+          <p className="lp-section-desc">
+            A unified AI platform bringing together browser intelligence, voice guidance, and verified
+            security for students, farmers, job seekers, and all Indian citizens.
+          </p>
+        </div>
+
+        <div className="lp-grid-cards">
+          {/* Feature 1 */}
+          <div className="lp-feature-card">
+            <div className="lp-card-icon-wrap">⚡</div>
+            <h3 className="lp-card-heading">AI Form Detection &amp; Autofill</h3>
+            <p className="lp-card-body">
+              Our intelligent companion analyzes dynamic web forms, parses requirements, and fills
+              verified details with zero manual repetition.
             </p>
+            <div className="lp-card-tag">99.4% Field Accuracy</div>
           </div>
 
-          <div className="features-grid-maroon">
-            <div className="feature-box-maroon">
-              <div className="feature-box-icon">⚡</div>
-              <h3 className="feature-box-title">Autonomous Form Autofill</h3>
-              <p className="feature-box-desc">
-                Fill forms across government, university, and public portals safely. You retain full control with zero automatic submissions.
-              </p>
-            </div>
+          {/* Feature 2 */}
+          <div className="lp-feature-card">
+            <div className="lp-card-icon-wrap">🌐</div>
+            <h3 className="lp-card-heading">Multilingual Voice Commander</h3>
+            <p className="lp-card-body">
+              Speak naturally in Hindi, Hinglish, English, Tamil, Telugu, Bengali, and more. Buddy listens,
+              understands citizen intent, and guides you step-by-step.
+            </p>
+            <div className="lp-card-tag">Bilingual &amp; Vernacular</div>
+          </div>
 
-            <div className="feature-box-maroon">
-              <div className="feature-box-icon">🎙️</div>
-              <h3 className="feature-box-title">Multilingual Voice Commands</h3>
-              <p className="feature-box-desc">
-                Speak naturally in Hindi, Tamil, Telugu, Bengali, Marathi, Gujarati, Kannada, Malayalam, Punjabi, Urdu, or English.
-              </p>
-            </div>
+          {/* Feature 3 */}
+          <div className="lp-feature-card">
+            <div className="lp-card-icon-wrap">📑</div>
+            <h3 className="lp-card-heading">Document Understanding &amp; OCR</h3>
+            <p className="lp-card-body">
+              Upload marksheets, caste certificates, income affidavits, or government circulars. Receive
+              plain-language summaries and automatic eligibility checks.
+            </p>
+            <div className="lp-card-tag">Instant PDF Parsing</div>
+          </div>
 
-            <div className="feature-box-maroon">
-              <div className="feature-box-icon">📄</div>
-              <h3 className="feature-box-title">AI Document Understanding</h3>
-              <p className="feature-box-desc">
-                Upload Aadhaar, PAN, marksheets, and income certificates. Our vision engine securely verifies and structures data locally.
-              </p>
-            </div>
+          {/* Feature 4 */}
+          <div className="lp-feature-card">
+            <div className="lp-card-icon-wrap">🧭</div>
+            <h3 className="lp-card-heading">Autonomous Browser Companion</h3>
+            <p className="lp-card-body">
+              Executes complex multi-step browser tasks: portal search, guideline navigation, PDF download
+              verification, and state persistence across page redirects.
+            </p>
+            <div className="lp-card-tag">Continuous Agent Loop</div>
+          </div>
 
-            <div className="feature-box-maroon">
-              <div className="feature-box-icon">🏛️</div>
-              <h3 className="feature-box-title">Grievance &amp; Scheme Tracking</h3>
-              <p className="feature-box-desc">
-                File grievances directly to administrative departments, calculate scheme eligibility, and track application stages live.
-              </p>
+          {/* Feature 5 */}
+          <div className="lp-feature-card">
+            <div className="lp-card-icon-wrap">🔔</div>
+            <h3 className="lp-card-heading">Application Tracker &amp; Alerts</h3>
+            <p className="lp-card-body">
+              Never miss a scholarship deadline, recruitment cutoff, or certificate verification date with
+              real-time notifications and tracking dashboard.
+            </p>
+            <div className="lp-card-tag">Live Push Notifications</div>
+          </div>
+
+          {/* Feature 6 */}
+          <div className="lp-feature-card">
+            <div className="lp-card-icon-wrap">⚖️</div>
+            <h3 className="lp-card-heading">Grievance Redressal Assistant</h3>
+            <p className="lp-card-body">
+              File formal grievances across public departments with AI-assisted drafting, department
+              classification, and live resolution tracking.
+            </p>
+            <div className="lp-card-tag">Public Service SLA</div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─────────────────────────────────────────────────────────────
+          4. ABOUT & DIGITAL MISSION SECTION
+          ───────────────────────────────────────────────────────────── */}
+      <section id="about" className="lp-about-section">
+        <div className="lp-about-container">
+          <div className="lp-about-copy">
+            <span className="lp-section-eyebrow">Digital Governance Mission</span>
+            <h2>Bridging the Distance Between Citizens &amp; Public Services</h2>
+            <p>
+              Navigating government portals and institutional procedures can be confusing and time-consuming.
+              TechForm Buddy is engineered to make digital services as natural as having an expert companion
+              by your side.
+            </p>
+            <p>
+              Collaborating with academic institutions like <strong>Vikrant University</strong>, we combine
+              ethical AI models, privacy-preserving client sandboxes, and multilingual speech to ensure
+              every citizen can access benefits without hurdles.
+            </p>
+            <Link href="/login" className="lp-cta-primary" style={{ display: 'inline-flex' }}>
+              Join TechForm Buddy Today →
+            </Link>
+          </div>
+
+          <div className="lp-about-stats">
+            <div className="lp-stat-box">
+              <div className="lp-stat-num">500+</div>
+              <div className="lp-stat-label">Government &amp; Exam Portals Supported</div>
+            </div>
+            <div className="lp-stat-box">
+              <div className="lp-stat-num">10+</div>
+              <div className="lp-stat-label">Indian Regional Languages</div>
+            </div>
+            <div className="lp-stat-box">
+              <div className="lp-stat-num">100%</div>
+              <div className="lp-stat-label">Encrypted &amp; Citizen-Owned Data</div>
+            </div>
+            <div className="lp-stat-box">
+              <div className="lp-stat-num">0s</div>
+              <div className="lp-stat-label">Form Redundancy &amp; Repetition</div>
             </div>
           </div>
         </div>
       </section>
 
       {/* ─────────────────────────────────────────────────────────────
-          4. FOOTER
+          5. FOOTER
           ───────────────────────────────────────────────────────────── */}
-      <footer className="landing-footer-maroon">
-        <div className="footer-inner-content">
-          <div className="brand-section">
-            <div
-              style={{
-                width: 34,
-                height: 34,
-                borderRadius: '50%',
-                background: '#ffffff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <svg width="22" height="22" viewBox="0 0 32 32" fill="none">
-                <rect x="6" y="9" width="20" height="15" rx="5" fill="#4a0e17" />
-                <circle cx="16" cy="4" r="2" fill="#4a0e17" />
-                <rect x="9" y="12" width="14" height="6" rx="2" fill="#ffffff" />
-                <circle cx="12" cy="15" r="1.5" fill="#4a0e17" />
-                <circle cx="20" cy="15" r="1.5" fill="#4a0e17" />
-              </svg>
+      <footer id="contact" className="lp-footer">
+        <div className="lp-footer-container">
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <BuddyMascot size={32} state="idle" />
+              <span style={{ fontSize: '18px', fontWeight: 800, color: '#ffffff' }}>TechForm Buddy</span>
             </div>
-            <div>
-              <div style={{ fontSize: '16px', fontWeight: 800, color: '#ffffff' }}>TechForm Buddy</div>
-              <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.65)' }}>Digital India • Citizen AI Platform</div>
-            </div>
+            <p className="lp-footer-brand-p">
+              Intelligent digital assistance for forms, certificates, scholarships, and citizen services across India.
+            </p>
           </div>
 
-          <div style={{ display: 'flex', gap: '24px', fontSize: '13px' }}>
-            <Link href="/login" style={{ color: 'rgba(255, 255, 255, 0.8)', textDecoration: 'none' }}>Sign In</Link>
-            <Link href="/register" style={{ color: 'rgba(255, 255, 255, 0.8)', textDecoration: 'none' }}>Register</Link>
-            <Link href="/status" style={{ color: 'rgba(255, 255, 255, 0.8)', textDecoration: 'none' }}>System Status</Link>
+          <div className="lp-footer-col">
+            <h4>Platform</h4>
+            <ul>
+              <li><a href="#hero">Home</a></li>
+              <li><a href="#features">Features</a></li>
+              <li><Link href="/login">Citizen Login</Link></li>
+              <li><Link href="/register">Register Account</Link></li>
+            </ul>
+          </div>
+
+          <div className="lp-footer-col">
+            <h4>Services</h4>
+            <ul>
+              <li><Link href="/forms">Form Detection</Link></li>
+              <li><Link href="/documents">Document OCR</Link></li>
+              <li><Link href="/grievances">Grievances</Link></li>
+              <li><Link href="/status">System Health</Link></li>
+            </ul>
+          </div>
+
+          <div className="lp-footer-col">
+            <h4>Institutional</h4>
+            <ul>
+              <li><span>Vikrant University Campus</span></li>
+              <li><span>Digital India Initiative</span></li>
+              <li><span>Citizen Support 24/7</span></li>
+              <li><span>256-bit AES Privacy</span></li>
+            </ul>
           </div>
         </div>
 
-        <div className="footer-copy-text">
-          © {new Date().getFullYear()} TechForm Buddy. All rights reserved. Designed for Indian Citizens.
+        <div className="lp-footer-bottom">
+          <div>© {new Date().getFullYear()} TechForm Buddy. All rights reserved. Developed for Digital India.</div>
+          <div style={{ display: 'flex', gap: '20px' }}>
+            <span>Privacy Policy</span>
+            <span>Terms of Service</span>
+            <span>Security Compliance</span>
+          </div>
         </div>
       </footer>
     </div>

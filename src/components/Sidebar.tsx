@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
+import BuddyMascot from '@/components/BuddyMascot';
 
 export const SIDEBAR_NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard', icon: 'home' },
@@ -148,10 +149,7 @@ export default function Sidebar({ mobileOpen = false, onCloseMobile }: SidebarPr
       <aside className={`sidebar ${mobileOpen ? 'sidebar-open' : ''}`}>
         <div className="sidebar-header">
           <Link href="/dashboard" className="sidebar-logo" onClick={onCloseMobile}>
-            <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
-              <rect width="32" height="32" rx="8" fill="#3b82f6" />
-              <path d="M8 12h16M8 16h12M8 20h14M22 10l4 4-4 4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            <BuddyMascot size={28} state="idle" />
             <span className="sidebar-logo-text">TechForm Buddy</span>
           </Link>
           {onCloseMobile && (

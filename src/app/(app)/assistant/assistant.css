@@ -42,9 +42,9 @@
 }
 
 .domain-pill-active {
-  background: var(--color-primary);
+  background: var(--color-burgundy-deep);
   color: white;
-  border-color: var(--color-primary);
+  border-color: var(--color-burgundy-deep);
 }
 
 .assistant-search-box {
@@ -59,8 +59,8 @@
 }
 
 .assistant-search-box:focus-within {
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+  border-color: var(--color-burgundy-deep);
+  box-shadow: 0 0 0 2px rgba(89, 9, 7, 0.15);
 }
 
 .assistant-input {
