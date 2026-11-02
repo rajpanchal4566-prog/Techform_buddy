@@ -1,0 +1,71 @@
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+  --tfb-bg: #FFF5F7;
+  --tfb-surface: #FFFFFF;
+  --tfb-surface-2: #FDE3E8;
+  --tfb-border: #F0D4D9;
+  --tfb-text: #2A0A12;
+  --tfb-text-muted: #6B4A52;
+  --tfb-primary: #D2042D;
+  --tfb-primary-hover: #B00325;
+  --tfb-primary-deep: #8A031D;
+  --tfb-primary-contrast: #FFFFFF;
+  --tfb-glow: #FF4D6D;
+  --tfb-success: #1FA971;
+  --tfb-warning: #F5A524;
+  --tfb-info: #3B82F6;
+  --tfb-danger: #8A031D;
+  --tfb-focus-ring: #D2042D;
+  --tfb-tint: #FDE3E8;
+  --tfb-tint-soft: #FFF5F7;
+  --tfb-success-text: #126344;
+  --tfb-warning-text: #704300;
+  --tfb-info-text: #174A8B;
+  --tfb-danger-text: #700018;
+  --tfb-shadow-1: 0 1px 2px color-mix(in srgb, var(--tfb-text) 8%, transparent);
+  --tfb-shadow-2: 0 1px 3px color-mix(in srgb, var(--tfb-text) 10%, transparent),
+    0 1px 2px color-mix(in srgb, var(--tfb-text) 8%, transparent);
+  --tfb-shadow-3: 0 4px 6px color-mix(in srgb, var(--tfb-text) 9%, transparent),
+    0 2px 4px color-mix(in srgb, var(--tfb-text) 7%, transparent);
+  --tfb-shadow-4: 0 10px 15px color-mix(in srgb, var(--tfb-text) 10%, transparent),
+    0 4px 6px color-mix(in srgb, var(--tfb-text) 8%, transparent);
+  --tfb-radius-sm: 6px;
+  --tfb-radius-md: 10px;
+  --tfb-radius-lg: 14px;
+  --tfb-radius-xl: 20px;
+  --tfb-radius-full: 9999px;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --tfb-bg: #12060A;
+  --tfb-surface: #1D0B11;
+  --tfb-surface-2: #2A121A;
+  --tfb-border: #3A1A24;
+  --tfb-text: #FDEFF2;
+  --tfb-text-muted: #C9A3AD;
+  --tfb-primary: #D2042D;
+  --tfb-primary-hover: #B00325;
+  --tfb-primary-deep: #8A031D;
+  --tfb-primary-contrast: #FFFFFF;
+  --tfb-glow: #FF4D6D;
+  --tfb-success: #1FA971;
+  --tfb-warning: #F5A524;
+  --tfb-info: #3B82F6;
+  --tfb-danger: #8A031D;
+  --tfb-focus-ring: #FF4D6D;
+  --tfb-tint: #2A121A;
+  --tfb-tint-soft: #1D0B11;
+  --tfb-success-text: #72E0B0;
+  --tfb-warning-text: #FFD081;
+  --tfb-info-text: #9BC4FF;
+  --tfb-danger-text: #FFDDE4;
+  --tfb-shadow-1: 0 1px 2px color-mix(in srgb, #000000 35%, transparent);
+  --tfb-shadow-2: 0 1px 3px color-mix(in srgb, #000000 40%, transparent),
+    0 1px 2px color-mix(in srgb, #000000 30%, transparent);
+  --tfb-shadow-3: 0 4px 6px color-mix(in srgb, #000000 42%, transparent),
+    0 2px 4px color-mix(in srgb, #000000 34%, transparent);
+  --tfb-shadow-4: 0 10px 15px color-mix(in srgb, #000000 46%, transparent),
+    0 4px 6px color-mix(in srgb, #000000 36%, transparent);
+}

@@ -4,6 +4,7 @@
    ============================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Devanagari:wght@400;600;700;800&display=swap');
+@import "../theme/tokens.css";
 
 /* Professional Devanagari Typeface for Indian Languages & Institutional Partner Names */
 @font-face {
@@ -24,37 +25,36 @@
 
 /* --- CSS Variables --- */
 :root {
-  /* Colors — Neutral + Soft Blue Accent */
-  --color-bg: #fafafa;
-  --color-bg-secondary: #ffffff;
-  --color-bg-tertiary: #f4f4f5;
-  --color-bg-hover: #e4e4e7;
+  --color-bg: var(--tfb-bg);
+  --color-bg-secondary: var(--tfb-surface);
+  --color-bg-tertiary: var(--tfb-surface-2);
+  --color-bg-hover: color-mix(in srgb, var(--tfb-primary) 8%, var(--tfb-surface));
 
-  --color-text-primary: #18181b;
-  --color-text-secondary: #52525b;
-  --color-text-tertiary: #a1a1aa;
-  --color-text-inverse: #ffffff;
+  --color-text-primary: var(--tfb-text);
+  --color-text-secondary: var(--tfb-text-muted);
+  --color-text-tertiary: var(--tfb-text-muted);
+  --color-text-inverse: var(--tfb-primary-contrast);
 
-  --color-accent: #3b82f6;
-  --color-accent-hover: #2563eb;
-  --color-accent-light: #eff6ff;
-  --color-accent-muted: #93c5fd;
+  --color-accent: var(--tfb-primary);
+  --color-accent-hover: var(--tfb-primary-hover);
+  --color-accent-light: var(--tfb-tint);
+  --color-accent-muted: var(--tfb-glow);
 
-  --color-border: #e4e4e7;
-  --color-border-focus: #3b82f6;
+  --color-border: var(--tfb-border);
+  --color-border-focus: var(--tfb-focus-ring);
 
-  --color-success: #22c55e;
-  --color-success-light: #f0fdf4;
-  --color-warning: #f59e0b;
-  --color-warning-light: #fffbeb;
-  --color-error: #ef4444;
-  --color-error-light: #fef2f2;
+  --color-success: var(--tfb-success);
+  --color-success-light: color-mix(in srgb, var(--tfb-success) 12%, var(--tfb-surface));
+  --color-warning: var(--tfb-warning);
+  --color-warning-light: color-mix(in srgb, var(--tfb-warning) 14%, var(--tfb-surface));
+  --color-error: var(--tfb-danger);
+  --color-error-light: color-mix(in srgb, var(--tfb-danger) 10%, var(--tfb-surface));
 
   /* Shadows */
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.05), 0 2px 4px rgba(0, 0, 0, 0.04);
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.06), 0 4px 6px rgba(0, 0, 0, 0.04);
+  --shadow-xs: var(--tfb-shadow-1);
+  --shadow-sm: var(--tfb-shadow-2);
+  --shadow-md: var(--tfb-shadow-3);
+  --shadow-lg: var(--tfb-shadow-4);
 
   /* Radius */
   --radius-sm: 6px;
