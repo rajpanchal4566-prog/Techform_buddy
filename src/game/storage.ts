@@ -9,7 +9,8 @@ export function readBestScore(storage: StringStorage): number {
   try {
     const value = Number(storage.getItem(BEST_SCORE_KEY) || 0);
     return Number.isFinite(value) && value >= 0 ? Math.floor(value) : 0;
-  } catch {
+  } catch (error) {
+    console.warn('[Buddy Defender] Could not read the best score:', error);
     return 0;
   }
 }
@@ -18,8 +19,9 @@ export function writeBestScore(storage: StringStorage, score: number): number {
   const best = Math.max(readBestScore(storage), Math.max(0, Math.floor(score)));
   try {
     storage.setItem(BEST_SCORE_KEY, String(best));
-  } catch {
-    return readBestScore(storage);
+  } catch (error) {
+    console.warn('[Buddy Defender] Could not save the best score:', error);
+    return best;
   }
   return best;
 }

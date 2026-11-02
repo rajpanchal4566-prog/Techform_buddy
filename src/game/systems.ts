@@ -53,7 +53,6 @@ export class GameEngine {
   shake: number = 0;
   healSpawnTimer: number = ARENA.healMinInterval;
   timeSinceHealSeen: number = ARENA.healGuaranteeInterval;
-  enemiesApproachTimer: number = 0;
   totalShots: number = 0;
   totalHits: number = 0;
   private fireTimer: number = 0;
@@ -131,7 +130,7 @@ export class GameEngine {
     enemy.radius = stats.radius;
     enemy.contactTimer = 0;
     enemy.age = 0;
-    enemy.blinkTimer = this.random.range(2.5, 3);
+    enemy.blinkTimer = this.random.range(ARENA.shadowTeleportInterval - 0.5, ARENA.shadowTeleportInterval);
     enemy.wobble = this.random.range(0, Math.PI * 2);
     enemy.hitFlash = 0;
     enemy.zigzag = this.random.range(0, Math.PI * 2);
@@ -150,7 +149,7 @@ export class GameEngine {
     if (this.heroInvulnerability > 0 || this.phase !== 'running') return false;
     this.hp = Math.max(0, this.hp - amount);
     this.heroInvulnerability = ARENA.hitInvulnerability;
-    this.heroFlash = 0.3;
+    this.heroFlash = ARENA.heroDamageFlash;
     if (!this.reduceEffects) this.shake = Math.min(ARENA.maxShake, this.shake + 4);
     if (this.hp === 0) {
       this.phase = 'game-over';
@@ -220,11 +219,18 @@ export class GameEngine {
 
   snapshot(): GameSnapshot {
     let alive = 0;
+    let healMessage = '';
     const enemyTypeCounts: Record<EnemyKind, number> = { cube: 0, triangle: 0, circle: 0, hexagon: 0, shadow: 0 };
     for (let i = 0; i < this.enemies.length; i++) {
       if (!this.enemies[i].active) continue;
       alive++;
       enemyTypeCounts[this.enemies[i].kind]++;
+    }
+    for (let i = 0; i < this.floatingTexts.length; i++) {
+      if (this.floatingTexts[i].active && this.floatingTexts[i].text === '+20 HP') {
+        healMessage = this.floatingTexts[i].text;
+        break;
+      }
     }
     return {
       phase: this.phase,
@@ -244,6 +250,7 @@ export class GameEngine {
       reduceEffects: this.reduceEffects,
       bestScore: this.bestScore,
       healActive: this.pickup.active,
+      healMessage,
       bannerTimer: this.waveBanner,
       gameTime: this.elapsed,
     };
@@ -395,10 +402,10 @@ export class GameEngine {
       if (enemy.kind === 'shadow') {
         enemy.blinkTimer -= dt;
         if (enemy.blinkTimer <= 0) {
-          enemy.blinkTimer = 3;
+          enemy.blinkTimer = ARENA.shadowTeleportInterval;
           const angle = Math.atan2(this.heroY - enemy.y, this.heroX - enemy.x);
-          enemy.x += Math.cos(angle) * 120;
-          enemy.y += Math.sin(angle) * 120;
+          enemy.x += Math.cos(angle) * ARENA.shadowTeleportDistance;
+          enemy.y += Math.sin(angle) * ARENA.shadowTeleportDistance;
           enemy.x = Math.max(16, Math.min(ARENA.width - 16, enemy.x));
           enemy.y = Math.max(16, Math.min(ARENA.height - 16, enemy.y));
         }

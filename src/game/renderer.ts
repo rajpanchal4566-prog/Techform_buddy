@@ -1,5 +1,6 @@
 import { ARENA, type EnemyKind } from './config';
 import type { GameEngine } from './systems';
+import type { ArenaCopy } from './i18n';
 
 const COLORS: Record<EnemyKind, string> = {
   cube: '#ef4444',
@@ -13,10 +14,7 @@ export class GameRenderer {
   private readonly context: CanvasRenderingContext2D;
   private readonly starsX = new Float32Array(68);
   private readonly starsY = new Float32Array(68);
-  private width: number = ARENA.width;
-  private height: number = ARENA.height;
   private dpr = 1;
-  private frameTime = 0;
 
   constructor(private readonly canvas: HTMLCanvasElement, seed = 32767) {
     const context = canvas.getContext('2d', { alpha: false });
@@ -35,13 +33,11 @@ export class GameRenderer {
     const rect = this.canvas.getBoundingClientRect();
     if (!rect.width || !rect.height) return;
     this.dpr = Math.min(window.devicePixelRatio || 1, 2);
-    this.width = rect.width;
-    this.height = rect.height;
     this.canvas.width = Math.round(rect.width * this.dpr);
     this.canvas.height = Math.round(rect.height * this.dpr);
   }
 
-  render(engine: GameEngine, time: number, frameDelta: number): void {
+  render(engine: GameEngine, time: number, copy: ArenaCopy): void {
     const ctx = this.context;
     const scaleX = this.canvas.width / ARENA.width;
     const scaleY = this.canvas.height / ARENA.height;
@@ -58,14 +54,9 @@ export class GameRenderer {
     this.drawBullets(engine);
     this.drawEnemies(engine, time);
     this.drawHero(engine, time);
-    this.drawEffects(engine);
+    this.drawEffects(engine, copy);
     ctx.restore();
 
-    this.frameTime += frameDelta;
-    if (this.frameTime > 0.24) {
-      this.frameTime = 0;
-      // Frame-pressure response is applied by the caller through the engine flag.
-    }
   }
 
   private drawBackground(time: number): void {
@@ -95,7 +86,7 @@ export class GameRenderer {
 
   private drawHero(engine: GameEngine, time: number): void {
     const ctx = this.context;
-    const low = engine.hp < 25;
+    const low = engine.hp < ARENA.lowHealthWarning;
     const bob = engine.phase === 'start' || engine.phase === 'paused' ? Math.sin(time * 2.2) * 3 : Math.sin(time * 4) * 1.5;
     const x = engine.heroX;
     const y = engine.heroY + bob;
@@ -270,7 +261,7 @@ export class GameRenderer {
     ctx.restore();
   }
 
-  private drawEffects(engine: GameEngine): void {
+  private drawEffects(engine: GameEngine, copy: ArenaCopy): void {
     const ctx = this.context;
     for (let i = 0; i < engine.particles.length; i++) {
       const particle = engine.particles[i];
@@ -298,10 +289,10 @@ export class GameRenderer {
       ctx.textAlign = 'center';
       ctx.fillStyle = '#ffffff';
       ctx.font = '700 32px Inter, sans-serif';
-      ctx.fillText(`WAVE ${engine.wave} COMPLETE`, ARENA.width / 2, ARENA.height / 2 - 15);
+      ctx.fillText(copy.waveComplete.replace('{n}', String(engine.wave)), ARENA.width / 2, ARENA.height / 2 - 15);
       ctx.font = '500 15px Inter, sans-serif';
       ctx.fillStyle = '#bfdbfe';
-      ctx.fillText(`Next wave in ${Math.max(1, Math.ceil(engine.waveBanner))}s`, ARENA.width / 2, ARENA.height / 2 + 18);
+      ctx.fillText(copy.nextWaveIn.replace('{n}', String(Math.max(1, Math.ceil(engine.waveBanner)))), ARENA.width / 2, ARENA.height / 2 + 18);
     }
   }
 }

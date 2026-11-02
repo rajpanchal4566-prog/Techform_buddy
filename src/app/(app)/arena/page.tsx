@@ -7,11 +7,11 @@ import styles from './arena.module.css';
 
 const GameClient = dynamic(() => import('./GameClient'), {
   ssr: false,
-  loading: () => <div className={styles.loading} aria-live="polite">Loading Buddy Defender…</div>,
+  loading: () => <div className={styles.loading} aria-busy="true" />,
 });
 
 export default function ArenaPage() {
-  useAppHeader({ title: 'Buddy Defender', subtitle: 'A quick safety arcade challenge' });
+  useAppHeader({ title: 'Buddy Defender' });
 
   useEffect(() => {
     document.body.classList.add('tfb-arena-active');

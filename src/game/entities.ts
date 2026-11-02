@@ -81,6 +81,7 @@ export interface GameSnapshot {
   reduceEffects: boolean;
   bestScore: number;
   healActive: boolean;
+  healMessage: string;
   bannerTimer: number;
   gameTime: number;
 }

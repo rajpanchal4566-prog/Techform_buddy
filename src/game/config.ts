@@ -3,6 +3,7 @@ export const ARENA = {
   height: 540,
   heroRadius: 28,
   heroMaxHp: 100,
+  lowHealthWarning: 25,
   aimRange: 260,
   bulletSpeed: 520,
   bulletLifetime: 1.2,
@@ -18,6 +19,7 @@ export const ARENA = {
   particlePoolSize: 180,
   contactInterval: 0.8,
   hitInvulnerability: 0.3,
+  heroDamageFlash: 0.3,
   waveIntermission: 3,
   healRestore: 20,
   healLifetime: 10,
@@ -28,6 +30,11 @@ export const ARENA = {
   shadowWave: 3,
   shadowGuaranteedEvery: 5,
   shadowChance: 0.05,
+  shadowTeleportDistance: 120,
+  shadowTeleportInterval: 3,
+  enemyHpPerWave: 0.08,
+  enemySpeedPerWave: 0.03,
+  enemySpeedCap: 0.6,
   spawnIntervalStart: 1.4,
   spawnIntervalStep: 0.08,
   spawnIntervalMin: 0.45,
@@ -54,8 +61,20 @@ export const ENEMIES: Record<EnemyKind, EnemyConfig> = {
   shadow: { hp: 140, speed: 80, damage: 20, score: 100, radius: 22 },
 };
 
-export const WEAPON_DAMAGE: readonly number[] = [10, 12.5, 12.5, 12.5, 12.5];
-export const WEAPON_FIRE_RATE: readonly number[] = [3.3, 3.3, 3.3, 4.29, 4.29];
+export const WEAPON_DAMAGE: readonly number[] = [
+  ARENA.baseDamage,
+  ARENA.baseDamage * 1.25,
+  ARENA.baseDamage * 1.25,
+  ARENA.baseDamage * 1.25,
+  ARENA.baseDamage * 1.25,
+];
+export const WEAPON_FIRE_RATE: readonly number[] = [
+  ARENA.baseFireRate,
+  ARENA.baseFireRate,
+  ARENA.baseFireRate,
+  ARENA.baseFireRate * 1.3,
+  ARENA.baseFireRate * 1.3,
+];
 
 export function getWaveEnemyCount(wave: number): number {
   return 6 + 4 * Math.max(1, Math.floor(wave));
@@ -67,8 +86,8 @@ export function getWaveSpawnInterval(wave: number): number {
 
 export function getEnemyScale(wave: number): { hp: number; speed: number } {
   return {
-    hp: Math.pow(1.08, Math.max(0, wave - 1)),
-    speed: 1 + Math.min(0.6, Math.max(0, wave - 1) * 0.03),
+    hp: Math.pow(1 + ARENA.enemyHpPerWave, Math.max(0, wave - 1)),
+    speed: 1 + Math.min(ARENA.enemySpeedCap, Math.max(0, wave - 1) * ARENA.enemySpeedPerWave),
   };
 }
 

@@ -22,6 +22,7 @@ test.describe('App Shell Infinite Loop Guard & Render Verification', () => {
 
   const signedInPages = [
     { name: 'Dashboard', path: '/dashboard', expectedTitle: 'Dashboard' },
+    { name: 'Buddy Defender', path: '/arena', expectedTitle: 'Buddy Defender' },
     { name: 'Forms', path: '/forms', expectedTitle: 'Forms' },
     { name: 'Forms New', path: '/forms/new', expectedTitle: 'New Form & Official Letter' },
     { name: 'Grievances', path: '/grievances', expectedTitle: 'Grievance Redressal & Tracker' },

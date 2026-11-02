@@ -1,8 +1,10 @@
 import { expect, test } from '@playwright/test';
 import { ARENA, ENEMIES, WEAPON_DAMAGE, WEAPON_FIRE_RATE, getEnemyScale, getUpgradeCost, getWaveEnemyCount, getWaveSpawnInterval } from '../../../src/game/config';
 import { isCollision } from '../../../src/game/entities';
+import { formatArenaText, getArenaCopy, getSafetyTip } from '../../../src/game/i18n';
 import { GameEngine } from '../../../src/game/systems';
 import { BEST_SCORE_KEY, readBestScore, writeBestScore, type StringStorage } from '../../../src/game/storage';
+import { SUPPORTED_LANGUAGES } from '../../../src/lib/languages';
 
 const storage = (): StringStorage & { values: Map<string, string> } => {
   const values = new Map<string, string>();
@@ -145,6 +147,7 @@ test('healing pickup restores health without exceeding 100 HP', () => {
   game.step(ARENA.fixedStep, { aimX: 0, aimY: 0, hasManualAim: false, pulsePressed: false });
   expect(game.hp).toBe(100);
   expect(game.pickup.active).toBe(false);
+  expect(game.snapshot().healMessage).toBe('+20 HP');
 });
 
 test('hero reaching zero health triggers game over and tracks the final score', () => {
@@ -170,5 +173,17 @@ test('best-score persistence keeps the highest valid score and tolerates storage
     setItem: () => { throw new Error('Storage disabled'); },
   };
   expect(readBestScore(blockedStorage)).toBe(0);
-  expect(writeBestScore(blockedStorage, 10)).toBe(0);
+  expect(writeBestScore(blockedStorage, 10)).toBe(10);
+});
+
+test('all supported app languages have localized game copy and safety tips', () => {
+  for (const language of SUPPORTED_LANGUAGES) {
+    const copy = getArenaCopy(language.code);
+    expect(copy.tagline.length).toBeGreaterThan(0);
+    expect(copy.safetyTips).toHaveLength(3);
+    expect(getSafetyTip(language.code, 1)).toBe(copy.safetyTips[0]);
+    expect(getSafetyTip(language.code, 4)).toBe(copy.safetyTips[0]);
+  }
+  expect(formatArenaText(getArenaCopy('hi').waveComplete, { n: 3 })).toContain('3');
+  expect(getArenaCopy('unsupported').tagline).toBe(getArenaCopy('en').tagline);
 });
