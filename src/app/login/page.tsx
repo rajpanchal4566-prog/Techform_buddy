@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import BuddyMascot from '@/components/BuddyMascot';
 import { validatePassword, getPasswordStrength } from '@/lib/auth';
+import { SUPPORTED_LANGUAGES, LanguageOption } from '@/lib/languages';
 import './auth.css';
 
 export default function LoginPage() {
@@ -15,10 +17,16 @@ export default function LoginPage() {
 
   // Login form state
   const [form, setForm] = useState({ email: '', password: '' });
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+
+  // Language dropdown
+  const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
+  const [selectedLang, setSelectedLang] = useState<LanguageOption>(SUPPORTED_LANGUAGES[0]);
 
   // Forgot Password state
   const [resetEmail, setResetEmail] = useState('');
@@ -230,364 +238,513 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="auth-page">
-      <div className="auth-container animate-fadeIn">
-        <div className="auth-header">
-          <div className="auth-logo">
-            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect width="32" height="32" rx="8" fill="#3b82f6" />
-              <path
-                d="M8 12h16M8 16h12M8 20h14M22 10l4 4-4 4"
-                stroke="white"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </div>
-          <h1>
-            {mode === 'login'
-              ? 'Welcome back'
-              : mode === 'forgot_request'
-              ? 'Reset Password'
-              : 'Set New Password'}
-          </h1>
-          <p>
-            {mode === 'login'
-              ? 'Sign in to your TechForm Buddy account'
-              : mode === 'forgot_request'
-              ? 'Enter your email to receive a 6-digit password reset code in English'
-              : `Enter the 6-digit code sent to ${resetEmail} and your new password`}
-          </p>
-        </div>
-
-        <div className="auth-form">
-          {error && (
-            <div className="auth-error animate-fadeIn" role="alert">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
-                <path d="M8 5v3M8 10.5v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
-              <div>
-                <div>{error}</div>
-                {typeof attemptsLeft === 'number' && attemptsLeft > 0 && (
-                  <div style={{ fontSize: '11px', marginTop: '3px', opacity: 0.9 }}>
-                    Attempts remaining: {attemptsLeft}
-                  </div>
-                )}
-              </div>
+    <div className="auth-root-wrapper">
+      {/* ─────────────────────────────────────────────────────────────
+          1. TOP NAVIGATION BAR (IDENTICAL TO IMAGE 1)
+          ───────────────────────────────────────────────────────────── */}
+      <header className="auth-topbar">
+        <div className="auth-topbar-inner">
+          <Link href="/" className="auth-brand">
+            <div className="auth-brand-avatar">
+              <BuddyMascot size={26} state="idle" />
             </div>
-          )}
-
-          {successMsg && !error && (
-            <div
-              style={{
-                fontSize: '13px',
-                color: '#10b981',
-                background: 'rgba(16, 185, 129, 0.12)',
-                padding: '10px 14px',
-                borderRadius: '6px',
-                border: '1px solid rgba(16, 185, 129, 0.3)',
-              }}
-            >
-              ✓ {successMsg}
+            <div className="auth-brand-text">
+              <span className="auth-brand-title">TechForm Buddy</span>
+              <span className="auth-brand-sub">Your AI Form &amp; Service Assistant</span>
             </div>
-          )}
+          </Link>
 
-          {/* NORMAL LOGIN MODE */}
-          {mode === 'login' && (
-            <>
+          <div className="auth-topbar-right">
+            <span className="auth-tagline-text">Smart • Simple • Multilingual</span>
+
+            {/* Language Selector */}
+            <div style={{ position: 'relative' }}>
               <button
                 type="button"
-                className="btn-google"
-                onClick={handleGoogleSignIn}
-                disabled={googleLoading || loading}
+                className="auth-lang-pill"
+                onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
+                aria-expanded={isLangMenuOpen}
               >
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                  <path
-                    d="M17.64 9.2045c0-.6381-.0573-1.2518-.1636-1.8409H9v3.4814h4.8436c-.2086 1.125-.8427 2.0782-1.7959 2.7164v2.2581h2.9087c1.7018-1.5668 2.6836-3.874 2.6836-6.615z"
-                    fill="#4285F4"
-                  />
-                  <path
-                    d="M9 18c2.43 0 4.4673-.806 5.9564-2.1805l-2.9087-2.2581c-.8059.54-1.8368.859-3.0477.859-2.344 0-4.3282-1.5831-5.036-3.7104H.9574v2.3318C2.4382 15.9832 5.4818 18 9 18z"
-                    fill="#34A853"
-                  />
-                  <path
-                    d="M3.964 10.71c-.18-.54-.2822-1.1168-.2822-1.71s.1022-1.17.2822-1.71V4.9582H.9573C.3477 6.1732 0 7.5477 0 9s.3477 2.8268.9573 4.0418L3.964 10.71z"
-                    fill="#FBBC05"
-                  />
-                  <path
-                    d="M9 3.5795c1.3214 0 2.5077.4541 3.4405 1.346l2.5813-2.5814C13.4632.9273 11.426 0 9 0 5.4818 0 2.4382 2.0168.9573 4.9582L3.964 7.29C4.6718 5.1627 6.656 3.5795 9 3.5795z"
-                    fill="#EA4335"
-                  />
-                </svg>
-                {googleLoading ? 'Connecting to Google...' : 'Continue with Google'}
+                <span>🌐</span>
+                <span>{selectedLang.nativeName}</span>
+                <span style={{ fontSize: '9px', opacity: 0.8 }}>▼</span>
               </button>
 
-              <div className="auth-divider">
-                <span>or sign in with email</span>
-              </div>
-
-              <form onSubmit={handleLoginSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
-                <div className="input-group">
-                  <label className="input-label" htmlFor="login-email">
-                    Email
-                  </label>
-                  <div className="input-with-icon">
-                    <svg className="input-icon" viewBox="0 0 18 18" fill="none">
-                      <path
-                        d="M3 5l6 4 6-4M3 13h12V5H3v8z"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                    <input
-                      id="login-email"
-                      type="email"
-                      className="input"
-                      placeholder="you@example.com"
-                      value={form.email}
-                      onChange={(e) => setForm({ ...form, email: e.target.value })}
-                      required
-                      autoComplete="email"
-                    />
-                  </div>
-                </div>
-
-                <div className="input-group">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <label className="input-label" htmlFor="login-password" style={{ margin: 0 }}>
-                      Password
-                    </label>
+              {isLangMenuOpen && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: 'calc(100% + 8px)',
+                    right: 0,
+                    background: '#ffffff',
+                    border: '1px solid #e0d4c5',
+                    borderRadius: '12px',
+                    boxShadow: '0 12px 30px rgba(53, 4, 7, 0.25)',
+                    padding: '6px',
+                    minWidth: '170px',
+                    zIndex: 200,
+                  }}
+                >
+                  {SUPPORTED_LANGUAGES.map((lang) => (
                     <button
+                      key={lang.code}
                       type="button"
-                      onClick={() => {
-                        setResetEmail(form.email);
-                        setError('');
-                        setSuccessMsg('');
-                        setMode('forgot_request');
-                      }}
                       style={{
-                        background: 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        width: '100%',
+                        padding: '8px 12px',
+                        background: selectedLang.code === lang.code ? '#fbeee9' : 'transparent',
+                        color: selectedLang.code === lang.code ? '#590907' : '#29211f',
+                        fontWeight: selectedLang.code === lang.code ? 700 : 500,
                         border: 'none',
-                        color: '#3b82f6',
-                        fontSize: '12px',
+                        borderRadius: '8px',
+                        fontSize: '13px',
                         cursor: 'pointer',
-                        fontWeight: 600,
-                        padding: 0,
+                        textAlign: 'left',
+                      }}
+                      onClick={() => {
+                        setSelectedLang(lang);
+                        setIsLangMenuOpen(false);
                       }}
                     >
-                      Forgot password?
+                      <span>{lang.nativeName}</span>
+                      <span style={{ fontSize: '10px', color: '#a5a79b' }}>{lang.code.toUpperCase()}</span>
                     </button>
-                  </div>
-
-                  <div className="input-with-icon" style={{ marginTop: '6px' }}>
-                    <svg className="input-icon" viewBox="0 0 18 18" fill="none">
-                      <rect x="4" y="8" width="10" height="8" rx="2" stroke="currentColor" strokeWidth="1.5" />
-                      <path d="M6 8V6a3 3 0 116 0v2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                    </svg>
-                    <input
-                      id="login-password"
-                      type="password"
-                      className="input"
-                      placeholder="Enter your password"
-                      value={form.password}
-                      onChange={(e) => setForm({ ...form, password: e.target.value })}
-                      required
-                      autoComplete="current-password"
-                    />
-                  </div>
-                </div>
-
-                <button type="submit" className="btn btn-primary btn-lg auth-submit" disabled={loading}>
-                  {loading ? 'Signing in...' : 'Sign in'}
-                </button>
-              </form>
-            </>
-          )}
-
-          {/* FORGOT PASSWORD STEP 1: REQUEST CODE */}
-          {mode === 'forgot_request' && (
-            <form onSubmit={handleRequestResetCode} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
-              <div className="input-group">
-                <label className="input-label" htmlFor="forgot-email">
-                  Registered Email Address
-                </label>
-                <div className="input-with-icon">
-                  <svg className="input-icon" viewBox="0 0 18 18" fill="none">
-                    <path
-                      d="M3 5l6 4 6-4M3 13h12V5H3v8z"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                  <input
-                    id="forgot-email"
-                    type="email"
-                    className="input"
-                    placeholder="you@example.com"
-                    value={resetEmail}
-                    onChange={(e) => setResetEmail(e.target.value)}
-                    required
-                    autoFocus
-                  />
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                className="btn btn-primary btn-lg auth-submit"
-                disabled={loading || resendCooldown > 0}
-              >
-                {loading
-                  ? 'Sending code...'
-                  : resendCooldown > 0
-                  ? `Wait ${resendCooldown}s`
-                  : 'Send Reset Code to Email'}
-              </button>
-
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => {
-                  setError('');
-                  setSuccessMsg('');
-                  setMode('login');
-                }}
-              >
-                ← Back to Sign in
-              </button>
-            </form>
-          )}
-
-          {/* FORGOT PASSWORD STEP 2: VERIFY OTP & SET NEW PASSWORD */}
-          {mode === 'forgot_reset' && (
-            <form onSubmit={handleResetPasswordSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
-              <div className="input-group">
-                <label className="input-label">6-Digit Reset Code (from email)</label>
-                <div className="otp-inputs-grid" dir="ltr">
-                  {digits.map((digit, idx) => (
-                    <input
-                      key={idx}
-                      id={`reset-otp-${idx}`}
-                      ref={(el) => {
-                        otpRefs.current[idx] = el;
-                      }}
-                      type="text"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      maxLength={1}
-                      className={`otp-digit-box ${digit ? 'filled' : ''}`}
-                      value={digit}
-                      onChange={(e) => handleDigitChange(idx, e.target.value)}
-                      onKeyDown={(e) => handleDigitKeyDown(idx, e)}
-                      onPaste={handleDigitPaste}
-                      disabled={loading}
-                      aria-label={`Reset Code Digit ${idx + 1}`}
-                    />
                   ))}
                 </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* ─────────────────────────────────────────────────────────────
+          2. HERO BACKDROP ARENA (IMAGE 1 FULL VIEW)
+          ───────────────────────────────────────────────────────────── */}
+      <main className="auth-arena">
+        <div className="auth-arena-overlay" />
+
+        <div className="auth-arena-grid">
+          {/* ─────────────────────────────────────────────────────────
+              LEFT COLUMN — HERO PROSE & 4 FEATURE PILLS
+              ───────────────────────────────────────────────────────── */}
+          <div className="auth-hero-info">
+            <div className="auth-badge-pill">
+              <span>🎓</span>
+              <span>Empowering Citizens • Enabling Digital India</span>
+            </div>
+
+            <h1 className="auth-hero-heading">
+              <span className="title-white">TechForm Buddy</span>
+              <span className="title-white">Your Smart Companion for</span>
+              <span className="title-gold">Forms, Services &amp;</span>
+              <span className="title-gold">Digital Assistance</span>
+            </h1>
+
+            <p className="auth-hero-subtext">
+              Powered by AI. Available in Multiple Languages.<br />
+              Designed for Every Indian Citizen.
+            </p>
+
+            <div className="auth-hero-pills">
+              <div className="auth-hero-pill">
+                <div className="auth-pill-circle">⚡</div>
+                <div className="auth-pill-text">Auto<br />Form Fill</div>
               </div>
 
-              <div className="input-group">
-                <label className="input-label" htmlFor="reset-new-password">
-                  New Password
-                </label>
-                <input
-                  id="reset-new-password"
-                  type="password"
-                  className="input"
-                  placeholder="Min 8 chars with upper, lower, number, symbol"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  required
-                />
+              <div className="auth-hero-pill">
+                <div className="auth-pill-circle">🔍</div>
+                <div className="auth-pill-text">Smart<br />Search</div>
+              </div>
 
-                {/* Password Strength Meter */}
-                {newPassword && (
-                  <div style={{ marginTop: '8px' }}>
-                    <div className="strength-bar-track">
-                      <div className={`strength-bar-fill score-${passwordStrength.score}`} />
+              <div className="auth-hero-pill">
+                <div className="auth-pill-circle">📄</div>
+                <div className="auth-pill-text">Document<br />Helper</div>
+              </div>
+
+              <div className="auth-hero-pill">
+                <div className="auth-pill-circle">🌐</div>
+                <div className="auth-pill-text">Multilingual<br />Support</div>
+              </div>
+            </div>
+
+            <div className="auth-hero-bottom-tag">
+              Your Digital Assistant, Always With You
+            </div>
+          </div>
+
+          {/* ─────────────────────────────────────────────────────────
+              RIGHT COLUMN — FLOATING WHITE AUTH CARD (IMAGE 1)
+              ───────────────────────────────────────────────────────── */}
+          <div className="auth-card-container">
+            <div className="auth-card">
+              {/* Card Header */}
+              <div className="auth-card-header">
+                <div className="auth-card-icon-wrap">
+                  <BuddyMascot size={32} state="idle" />
+                </div>
+                <h2 className="auth-card-title">Welcome to TechForm Buddy</h2>
+                <p className="auth-card-sub">
+                  {mode === 'login'
+                    ? 'Sign in to continue your journey'
+                    : mode === 'forgot_request'
+                    ? 'Reset your password'
+                    : 'Set a new password'}
+                </p>
+              </div>
+
+              {/* Mode: Login */}
+              {mode === 'login' && (
+                <>
+                  {/* Tabs: [ Login | Register ] */}
+                  <div className="auth-card-tabs">
+                    <button type="button" className="auth-tab-link active">
+                      Login
+                    </button>
+                    <Link href="/register" className="auth-tab-link">
+                      Register
+                    </Link>
+                  </div>
+
+                  {error && (
+                    <div className="auth-msg-error" role="alert">
+                      <span>⚠️</span>
+                      <div>{error}</div>
                     </div>
-                    <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)', marginTop: '4px' }}>
-                      Strength: <strong>{passwordStrength.label}</strong>
+                  )}
+
+                  {successMsg && (
+                    <div className="auth-msg-success">
+                      <span>✓</span>
+                      <div>{successMsg}</div>
+                    </div>
+                  )}
+
+                  <form onSubmit={handleLoginSubmit}>
+                    {/* Email Input */}
+                    <div className="auth-input-group">
+                      <div className="auth-input-wrapper">
+                        <svg className="auth-input-icon" viewBox="0 0 20 20" fill="none">
+                          <rect x="2.5" y="4.5" width="15" height="11" rx="2" stroke="currentColor" strokeWidth="1.5" />
+                          <path d="M3 5l7 5 7-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        <input
+                          id="login-email"
+                          type="email"
+                          className="auth-input"
+                          placeholder="Enter your email address"
+                          value={form.email}
+                          onChange={(e) => setForm({ ...form, email: e.target.value })}
+                          required
+                          autoComplete="email"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Password Input */}
+                    <div className="auth-input-group">
+                      <div className="auth-input-wrapper">
+                        <svg className="auth-input-icon" viewBox="0 0 20 20" fill="none">
+                          <rect x="4" y="9" width="12" height="8" rx="2" stroke="currentColor" strokeWidth="1.5" />
+                          <path d="M7 9V6a3 3 0 116 0v3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                        </svg>
+                        <input
+                          id="login-password"
+                          type={showPassword ? 'text' : 'password'}
+                          className="auth-input"
+                          placeholder="Enter your password"
+                          value={form.password}
+                          onChange={(e) => setForm({ ...form, password: e.target.value })}
+                          required
+                          autoComplete="current-password"
+                        />
+                        <button
+                          type="button"
+                          className="auth-pw-toggle"
+                          onClick={() => setShowPassword(!showPassword)}
+                          aria-label={showPassword ? 'Hide password' : 'Show password'}
+                        >
+                          {showPassword ? (
+                            <svg width="17" height="17" viewBox="0 0 20 20" fill="none">
+                              <path d="M3 3l14 14M8.5 8.5a2.5 2.5 0 003.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                              <path d="M4.5 7.5C3 9 2 10 2 10s3.5 6 8 6c1 0 1.9-.2 2.8-.6M16 13c1.5-1.5 2-3 2-3s-3.5-6-8-6c-.8 0-1.6.1-2.4.4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                            </svg>
+                          ) : (
+                            <svg width="17" height="17" viewBox="0 0 20 20" fill="none">
+                              <path d="M2 10s3.5-6 8-6 8 6 8 6-3.5 6-8 6-8-6-8-6z" stroke="currentColor" strokeWidth="1.5" />
+                              <circle cx="10" cy="10" r="2.5" stroke="currentColor" strokeWidth="1.5" />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Remember me & Forgot Password */}
+                    <div className="auth-meta-row">
+                      <label className="auth-remember-check">
+                        <input
+                          type="checkbox"
+                          checked={rememberMe}
+                          onChange={(e) => setRememberMe(e.target.checked)}
+                        />
+                        Remember me
+                      </label>
+
+                      <button
+                        type="button"
+                        className="auth-forgot-btn"
+                        onClick={() => {
+                          setResetEmail(form.email);
+                          setError('');
+                          setSuccessMsg('');
+                          setMode('forgot_request');
+                        }}
+                      >
+                        Forgot password?
+                      </button>
+                    </div>
+
+                    {/* Submit Button */}
+                    <button type="submit" className="auth-btn-primary" disabled={loading}>
+                      {loading ? 'Logging in...' : 'Login →'}
+                    </button>
+                  </form>
+
+                  {/* Divider */}
+                  <div className="auth-or-divider">
+                    <span>or</span>
+                  </div>
+
+                  {/* Continue with Google */}
+                  <button
+                    type="button"
+                    className="auth-btn-social"
+                    onClick={handleGoogleSignIn}
+                    disabled={googleLoading || loading}
+                  >
+                    <svg viewBox="0 0 18 18" fill="none">
+                      <path
+                        d="M17.64 9.2045c0-.6381-.0573-1.2518-.1636-1.8409H9v3.4814h4.8436c-.2086 1.125-.8427 2.0782-1.7959 2.7164v2.2581h2.9087c1.7018-1.5668 2.6836-3.874 2.6836-6.615z"
+                        fill="#4285F4"
+                      />
+                      <path
+                        d="M9 18c2.43 0 4.4673-.806 5.9564-2.1805l-2.9087-2.2581c-.8059.54-1.8368.859-3.0477.859-2.344 0-4.3282-1.5831-5.036-3.7104H.9574v2.3318C2.4382 15.9832 5.4818 18 9 18z"
+                        fill="#34A853"
+                      />
+                      <path
+                        d="M3.964 10.71c-.18-.54-.2822-1.1168-.2822-1.71s.1022-1.17.2822-1.71V4.9582H.9573C.3477 6.1732 0 7.5477 0 9s.3477 2.8268.9573 4.0418L3.964 10.71z"
+                        fill="#FBBC05"
+                      />
+                      <path
+                        d="M9 3.5795c1.3214 0 2.5077.4541 3.4405 1.346l2.5813-2.5814C13.4632.9273 11.426 0 9 0 5.4818 0 2.4382 2.0168.9573 4.9582L3.964 7.29C4.6718 5.1627 6.656 3.5795 9 3.5795z"
+                        fill="#EA4335"
+                      />
+                    </svg>
+                    <span>{googleLoading ? 'Connecting...' : 'Continue with Google'}</span>
+                  </button>
+
+                  {/* Continue with Aadhaar */}
+                  <button
+                    type="button"
+                    className="auth-btn-social"
+                    onClick={() => {
+                      setError('Aadhaar authentication is currently available via registered citizen portal login.');
+                    }}
+                  >
+                    {/* Stylized Aadhaar Emblem */}
+                    <svg viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="12" r="10" fill="#FFF7ED" stroke="#EA580C" strokeWidth="1.2" />
+                      <path d="M12 4v4M12 16v4M4 12h4M16 12h4" stroke="#DC2626" strokeWidth="1.5" strokeLinecap="round" />
+                      <circle cx="12" cy="12" r="3" fill="#EA580C" />
+                      <path d="M8 8l2 2M14 14l2 2M16 8l-2 2M10 14l-2 2" stroke="#F59E0B" strokeWidth="1.2" strokeLinecap="round" />
+                    </svg>
+                    <span>Continue with Aadhaar</span>
+                  </button>
+
+                  {/* Secure & Trusted Platform Badge */}
+                  <div className="auth-secure-footer">
+                    <svg className="auth-secure-icon" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 1.944A11.954 11.954 0 012.166 5C2.056 5.649 2 6.319 2 7c0 5.225 3.34 9.67 8 11.317C14.66 16.67 18 12.225 18 7c0-.682-.057-1.35-.166-2.001A11.954 11.954 0 0110 1.944zM13.707 8.707a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                    <span>Secure &amp; Trusted Platform</span>
+                  </div>
+                </>
+              )}
+
+              {/* Mode: Forgot Request */}
+              {mode === 'forgot_request' && (
+                <form onSubmit={handleRequestResetCode} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  {error && (
+                    <div className="auth-msg-error" role="alert">
+                      <span>⚠️</span>
+                      <div>{error}</div>
+                    </div>
+                  )}
+
+                  <div className="auth-input-group">
+                    <label className="auth-input-label" htmlFor="forgot-email">
+                      Registered Email Address
+                    </label>
+                    <div className="auth-input-wrapper">
+                      <svg className="auth-input-icon" viewBox="0 0 20 20" fill="none">
+                        <rect x="2.5" y="4.5" width="15" height="11" rx="2" stroke="currentColor" strokeWidth="1.5" />
+                        <path d="M3 5l7 5 7-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                      </svg>
+                      <input
+                        id="forgot-email"
+                        type="email"
+                        className="auth-input"
+                        placeholder="you@example.com"
+                        value={resetEmail}
+                        onChange={(e) => setResetEmail(e.target.value)}
+                        required
+                        autoFocus
+                      />
                     </div>
                   </div>
-                )}
-              </div>
 
-              <div className="input-group">
-                <label className="input-label" htmlFor="reset-confirm-password">
-                  Confirm New Password
-                </label>
-                <input
-                  id="reset-confirm-password"
-                  type="password"
-                  className="input"
-                  placeholder="Re-enter your new password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                />
-              </div>
+                  <button
+                    type="submit"
+                    className="auth-btn-primary"
+                    disabled={loading || resendCooldown > 0}
+                  >
+                    {loading
+                      ? 'Sending code...'
+                      : resendCooldown > 0
+                      ? `Wait ${resendCooldown}s`
+                      : 'Send Reset Code'}
+                  </button>
 
-              <button
-                type="submit"
-                className="btn btn-primary btn-lg auth-submit"
-                disabled={loading || digits.join('').length !== 6 || !newPassword}
-              >
-                {loading ? 'Resetting Password...' : 'Reset Password'}
-              </button>
+                  <button
+                    type="button"
+                    style={{
+                      background: 'transparent',
+                      border: '1.5px solid #ded6cd',
+                      borderRadius: '10px',
+                      padding: '10px',
+                      fontWeight: 600,
+                      color: '#554d48',
+                      cursor: 'pointer',
+                    }}
+                    onClick={() => {
+                      setError('');
+                      setSuccessMsg('');
+                      setMode('login');
+                    }}
+                  >
+                    ← Back to Login
+                  </button>
+                </form>
+              )}
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
-                <button
-                  type="button"
-                  onClick={handleRequestResetCode}
-                  disabled={loading || resendCooldown > 0}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: resendCooldown > 0 ? 'var(--color-text-tertiary)' : '#3b82f6',
-                    cursor: resendCooldown > 0 ? 'not-allowed' : 'pointer',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                  }}
-                >
-                  {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend Code'}
-                </button>
+              {/* Mode: Forgot Reset */}
+              {mode === 'forgot_reset' && (
+                <form onSubmit={handleResetPasswordSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  {error && (
+                    <div className="auth-msg-error" role="alert">
+                      <span>⚠️</span>
+                      <div>{error}</div>
+                    </div>
+                  )}
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    setError('');
-                    setSuccessMsg('');
-                    setMode('login');
-                  }}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: 'var(--color-text-secondary)',
-                    cursor: 'pointer',
-                    fontSize: '12px',
-                  }}
-                >
-                  ← Cancel
-                </button>
-              </div>
-            </form>
-          )}
+                  <div className="auth-input-group">
+                    <label className="auth-input-label">6-Digit Code (from your email)</label>
+                    <div style={{ display: 'flex', gap: '6px', justifyContent: 'space-between' }}>
+                      {digits.map((digit, idx) => (
+                        <input
+                          key={idx}
+                          id={`reset-otp-${idx}`}
+                          ref={(el) => {
+                            otpRefs.current[idx] = el;
+                          }}
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          maxLength={1}
+                          style={{
+                            width: '42px',
+                            height: '48px',
+                            textAlign: 'center',
+                            fontSize: '20px',
+                            fontWeight: 700,
+                            borderRadius: '8px',
+                            border: '1.5px solid #ded6cd',
+                            outline: 'none',
+                          }}
+                          value={digit}
+                          onChange={(e) => handleDigitChange(idx, e.target.value)}
+                          onKeyDown={(e) => handleDigitKeyDown(idx, e)}
+                          onPaste={handleDigitPaste}
+                          disabled={loading}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="auth-input-group">
+                    <label className="auth-input-label" htmlFor="reset-new-pw">
+                      New Password
+                    </label>
+                    <input
+                      id="reset-new-pw"
+                      type="password"
+                      className="auth-input"
+                      placeholder="Min 8 chars with upper, number, symbol"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div className="auth-input-group">
+                    <label className="auth-input-label" htmlFor="reset-confirm-pw">
+                      Confirm New Password
+                    </label>
+                    <input
+                      id="reset-confirm-pw"
+                      type="password"
+                      className="auth-input"
+                      placeholder="Re-enter password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="auth-btn-primary"
+                    disabled={loading || digits.join('').length !== 6 || !newPassword}
+                  >
+                    {loading ? 'Resetting Password...' : 'Reset Password'}
+                  </button>
+
+                  <button
+                    type="button"
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: '#554d48',
+                      fontSize: '12.5px',
+                      cursor: 'pointer',
+                      textAlign: 'center',
+                    }}
+                    onClick={() => {
+                      setError('');
+                      setSuccessMsg('');
+                      setMode('login');
+                    }}
+                  >
+                    ← Cancel and return to Login
+                  </button>
+                </form>
+              )}
+            </div>
+          </div>
         </div>
-
-        <div className="auth-footer">
-          <p>
-            Don&apos;t have an account? <Link href="/register">Create one</Link>
-          </p>
-        </div>
-      </div>
+      </main>
     </div>
   );
 }
