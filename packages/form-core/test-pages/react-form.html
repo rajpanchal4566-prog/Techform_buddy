@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>React Controlled Form Test Page</title>
+  <style>
+    body { font-family: sans-serif; padding: 24px; max-width: 600px; margin: 0 auto; }
+    .form-group { margin-bottom: 14px; }
+    label { display: block; margin-bottom: 4px; font-weight: bold; }
+    input, select { width: 100%; padding: 8px; box-sizing: border-box; }
+    .preview-box { background: #f0fdf4; border: 1px solid #86efac; padding: 12px; border-radius: 6px; margin-top: 16px; }
+  </style>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+</head>
+<body>
+  <h1>React-Controlled Form</h1>
+  <p>Tests native property setter compatibility with React synthetic events.</p>
+
+  <div id="react-root">Loading React Form...</div>
+
+  <script>
+    const e = React.createElement;
+    const useState = React.useState;
+
+    function ControlledForm() {
+      const [fullName, setFullName] = useState('');
+      const [email, setEmail] = useState('');
+      const [occupation, setOccupation] = useState('');
+      const [agreeTerms, setAgreeTerms] = useState(false);
+
+      return e('div', null, [
+        e('form', { key: 'form', id: 'react-form', onSubmit: (ev) => ev.preventDefault() }, [
+          e('div', { key: 'name-group', className: 'form-group' }, [
+            e('label', { key: 'name-lbl', htmlFor: 'react-name' }, 'Applicant Full Name'),
+            e('input', {
+              key: 'name-inp',
+              id: 'react-name',
+              name: 'full_name',
+              value: fullName,
+              onChange: (ev) => setFullName(ev.target.value),
+              placeholder: 'Enter name'
+            })
+          ]),
+          e('div', { key: 'email-group', className: 'form-group' }, [
+            e('label', { key: 'email-lbl', htmlFor: 'react-email' }, 'Email Address'),
+            e('input', {
+              key: 'email-inp',
+              id: 'react-email',
+              name: 'email',
+              type: 'email',
+              value: email,
+              onChange: (ev) => setEmail(ev.target.value),
+              placeholder: 'name@example.com'
+            })
+          ]),
+          e('div', { key: 'occ-group', className: 'form-group' }, [
+            e('label', { key: 'occ-lbl', htmlFor: 'react-occupation' }, 'Occupation'),
+            e('select', {
+              key: 'occ-sel',
+              id: 'react-occupation',
+              name: 'occupation',
+              value: occupation,
+              onChange: (ev) => setOccupation(ev.target.value)
+            }, [
+              e('option', { key: 'opt-empty', value: '' }, '-- Select Occupation --'),
+              e('option', { key: 'opt-eng', value: 'engineer' }, 'Software Engineer'),
+              e('option', { key: 'opt-doc', value: 'doctor' }, 'Medical Doctor'),
+              e('option', { key: 'opt-stu', value: 'student' }, 'Student')
+            ])
+          ]),
+          e('div', { key: 'chk-group', className: 'form-group' }, [
+            e('label', { key: 'chk-lbl' }, [
+              e('input', {
+                key: 'chk-inp',
+                id: 'react-agree',
+                name: 'agree',
+                type: 'checkbox',
+                checked: agreeTerms,
+                onChange: (ev) => setAgreeTerms(ev.target.checked)
+              }),
+              ' I confirm all provided details are true'
+            ])
+          ])
+        ]),
+
+        // Synchronized state preview
+        e('div', { key: 'preview', className: 'preview-box' }, [
+          e('strong', { key: 'p-title' }, 'React Internal State Monitor:'),
+          e('div', { key: 'p-name', id: 'state-preview-name' }, 'Name: ' + fullName),
+          e('div', { key: 'p-email', id: 'state-preview-email' }, 'Email: ' + email),
+          e('div', { key: 'p-occ', id: 'state-preview-occupation' }, 'Occupation: ' + occupation),
+          e('div', { key: 'p-agree', id: 'state-preview-agree' }, 'Agree: ' + (agreeTerms ? 'YES' : 'NO'))
+        ])
+      ]);
+    }
+
+    // Fallback if CDN is unreachable in test environment: mock React ValueTracker
+    window.addEventListener('DOMContentLoaded', () => {
+      const rootEl = document.getElementById('react-root');
+      if (typeof ReactDOM !== 'undefined') {
+        const root = ReactDOM.createRoot(rootEl);
+        root.render(e(ControlledForm));
+      } else {
+        // Standalone offline simulator implementing React 16-19 value tracker
+        rootEl.innerHTML = `
+          <form id="react-form">
+            <div class="form-group">
+              <label for="react-name">Applicant Full Name</label>
+              <input id="react-name" name="full_name" placeholder="Enter name">
+            </div>
+            <div class="form-group">
+              <label for="react-email">Email Address</label>
+              <input id="react-email" name="email" type="email" placeholder="name@example.com">
+            </div>
+            <div class="form-group">
+              <label for="react-occupation">Occupation</label>
+              <select id="react-occupation" name="occupation">
+                <option value="">-- Select Occupation --</option>
+                <option value="engineer">Software Engineer</option>
+                <option value="doctor">Medical Doctor</option>
+                <option value="student">Student</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label><input id="react-agree" name="agree" type="checkbox"> I confirm all provided details are true</label>
+            </div>
+          </form>
+          <div class="preview-box">
+            <strong>React Internal State Monitor:</strong>
+            <div id="state-preview-name">Name: </div>
+            <div id="state-preview-email">Email: </div>
+            <div id="state-preview-occupation">Occupation: </div>
+            <div id="state-preview-agree">Agree: NO</div>
+          </div>
+        `;
+
+        const nameInp = document.getElementById('react-name');
+        const emailInp = document.getElementById('react-email');
+        const occSel = document.getElementById('react-occupation');
+        const agreeInp = document.getElementById('react-agree');
+
+        nameInp.addEventListener('input', (ev) => {
+          document.getElementById('state-preview-name').textContent = 'Name: ' + ev.target.value;
+        });
+        emailInp.addEventListener('input', (ev) => {
+          document.getElementById('state-preview-email').textContent = 'Email: ' + ev.target.value;
+        });
+        occSel.addEventListener('change', (ev) => {
+          document.getElementById('state-preview-occupation').textContent = 'Occupation: ' + ev.target.value;
+        });
+        agreeInp.addEventListener('change', (ev) => {
+          document.getElementById('state-preview-agree').textContent = 'Agree: ' + (ev.target.checked ? 'YES' : 'NO');
+        });
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Sensitive Fields False Positive & True Positive Test Page</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; background: #f8fafc; }
+    h1 { color: #0f172a; }
+    .test-section { background: white; padding: 18px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e2e8f0; }
+    .form-group { margin-bottom: 12px; }
+    label { display: block; font-weight: 600; margin-bottom: 4px; font-size: 14px; }
+    input { width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; }
+  </style>
+</head>
+<body>
+  <h1>Sensitive Field Boundary Test Form</h1>
+  <p>Tests word-boundary isolation so words containing 'pan' or 'card' substrings are not flagged false positives.</p>
+
+  <div class="test-section">
+    <h2>1. Non-Sensitive Fields (False Positive Candidates - Must NOT Be Flagged)</h2>
+    <div class="form-group">
+      <label for="applicant_name">Full Legal Name</label>
+      <input type="text" id="applicant_name" name="full_name" placeholder="Full legal name">
+    </div>
+    <div class="form-group">
+      <label for="doc_upload">Supporting Document</label>
+      <input type="file" id="doc_upload" name="doc_upload">
+    </div>
+    <div class="form-group">
+      <label for="fp_company">Company / Enterprise Name</label>
+      <input type="text" id="fp_company" name="company" placeholder="Enter company name">
+    </div>
+    <div class="form-group">
+      <label for="fp_expand">Expand Horizon Description</label>
+      <input type="text" id="fp_expand" name="expand" placeholder="Expand projects">
+    </div>
+    <div class="form-group">
+      <label for="fp_panel">Advisory Panel Member</label>
+      <input type="text" id="fp_panel" name="panel" placeholder="Panel name">
+    </div>
+    <div class="form-group">
+      <label for="fp_japan">Japan Language Proficiency</label>
+      <input type="text" id="fp_japan" name="japan" placeholder="Japan course grade">
+    </div>
+    <div class="form-group">
+      <label for="fp_pan_asian">Pan-Asian Studies Institute</label>
+      <input type="text" id="fp_pan_asian" name="pan_asian" placeholder="Pan-Asian institute">
+    </div>
+    <div class="form-group">
+      <label for="fp_cardboard">Cardboard Container Volume</label>
+      <input type="text" id="fp_cardboard" name="cardboard" placeholder="Cardboard volume">
+    </div>
+  </div>
+
+  <div class="test-section">
+    <h2>2. True Sensitive Fields (Must Be Flagged sensitive: true, manual: true)</h2>
+    <div class="form-group">
+      <label for="tp_pan">Permanent Account Number (PAN)</label>
+      <input type="text" id="tp_pan" name="pan" placeholder="ABCDE1234F">
+    </div>
+    <div class="form-group">
+      <label for="tp_aadhaar">Aadhaar Card Number</label>
+      <input type="text" id="tp_aadhaar" name="aadhaar" placeholder="12-digit Aadhaar">
+    </div>
+    <div class="form-group">
+      <label for="tp_uid">UID Number</label>
+      <input type="text" id="tp_uid" name="uid" placeholder="UIDAI Unique ID">
+    </div>
+    <div class="form-group">
+      <label for="tp_epic">EPIC Voter Card Number</label>
+      <input type="text" id="tp_epic" name="epic" placeholder="EPIC number">
+    </div>
+    <div class="form-group">
+      <label for="tp_bank">Bank Account & IFSC</label>
+      <input type="text" id="tp_bank" name="bank_account" placeholder="Bank account number">
+    </div>
+    <div class="form-group">
+      <label for="tp_card">Debit Card Number</label>
+      <input type="text" id="tp_card" name="card_number" placeholder="16-digit card number">
+    </div>
+    <div class="form-group">
+      <label for="tp_hi_aadhaar">आधार कार्ड संख्या</label>
+      <input type="text" id="tp_hi_aadhaar" name="aadhaar_hi" placeholder="12 अंकों का आधार">
+    </div>
+    <div class="form-group">
+      <label for="tp_hi_pan">पैन नंबर</label>
+      <input type="text" id="tp_hi_pan" name="pan_hi" placeholder="पैन नंबर दर्ज करें">
+    </div>
+    <div class="form-group">
+      <label for="tp_hi_khata">बैंक खाता संख्या</label>
+      <input type="text" id="tp_hi_khata" name="khata_hi" placeholder="खाता संख्या">
+    </div>
+    <div class="form-group">
+      <label for="tp_hi_passport">पासपोर्ट नंबर</label>
+      <input type="text" id="tp_hi_passport" name="passport_hi" placeholder="पासपोर्ट नंबर">
+    </div>
+  </div>
+</body>
+</html>

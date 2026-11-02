@@ -1,0 +1,21 @@
+{
+  "name": "@techformbuddy/form-core",
+  "version": "1.0.0",
+  "description": "Shared form reading, auto-fill, and bridging core library for Chrome extension and Android WebView",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "npx esbuild src/index.ts --bundle --format=iife --global-name=TechFormBuddyCore --outfile=dist/form-core.iife.js",
+    "typecheck": "tsc --noEmit",
+    "test": "npx playwright test"
+  },
+  "keywords": [
+    "form-fill",
+    "automation",
+    "chrome-extension",
+    "capacitor",
+    "accessibility"
+  ],
+  "author": "TechForm Buddy",
+  "license": "MIT"
+}

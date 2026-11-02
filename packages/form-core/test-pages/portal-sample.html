@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>MPOnline Citizen Service Form - Portal Test</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; background: #f8fafc; }
+    .form-box { max-width: 600px; margin: 0 auto; background: white; padding: 24px; border-radius: 8px; border: 1px solid #cbd5e1; }
+    .form-group { margin-bottom: 16px; }
+    label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px; }
+    input { width: 100%; padding: 8px 12px; border: 1px solid #94a3b8; border-radius: 4px; box-sizing: border-box; }
+    button { padding: 10px 18px; background: #0284c7; color: white; border: none; border-radius: 4px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="form-box">
+    <h2>Madhya Pradesh Citizen Service Gateway</h2>
+    <p>Application for Domicile / Citizen Verification</p>
+
+    <form id="portal-form">
+      <div class="form-group">
+        <label for="applicant_name">Full Name of Applicant</label>
+        <input type="text" id="applicant_name" name="applicant_name" required>
+      </div>
+
+      <div class="form-group">
+        <label for="applicant_email">Email Address</label>
+        <input type="email" id="applicant_email" name="applicant_email">
+      </div>
+
+      <div class="form-group">
+        <label for="applicant_phone">Mobile Number</label>
+        <input type="tel" id="applicant_phone" name="applicant_phone">
+      </div>
+
+      <div class="form-group">
+        <label for="applicant_dob">Date of Birth</label>
+        <input type="date" id="applicant_dob" name="applicant_dob">
+      </div>
+
+      <!-- Low Confidence Field -->
+      <div class="form-group">
+        <label for="custom_ward_zone">Local Municipal Ward / Circle</label>
+        <input type="text" id="custom_ward_zone" name="custom_ward_zone">
+      </div>
+
+      <!-- SENSITIVE FIELDS: MUST NEVER BE READ, STORED OR FILLED -->
+      <div class="form-group">
+        <label for="portal_password">Portal Password</label>
+        <input type="password" id="portal_password" name="portal_password">
+      </div>
+
+      <div class="form-group">
+        <label for="portal_otp">One Time Password (OTP)</label>
+        <input type="text" id="portal_otp" name="portal_otp" autocomplete="one-time-code">
+      </div>
+
+      <button type="submit" id="btn-submit">Submit Application</button>
+    </form>
+  </div>
+</body>
+</html>

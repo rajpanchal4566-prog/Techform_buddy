@@ -1,0 +1,108 @@
+{
+  "id": "/?source=pwa",
+  "name": "TechForm Buddy — Smart Form Assistant",
+  "short_name": "TechFormBuddy",
+  "description": "Multilingual AI form filling assistant. Fill forms using voice in your native language, auto-fill verified profiles, and track forms.",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": [
+    "window-controls-overlay",
+    "standalone",
+    "minimal-ui"
+  ],
+  "background_color": "#0f172a",
+  "theme_color": "#3b82f6",
+  "orientation": "any",
+  "dir": "auto",
+  "lang": "en",
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "New Form & Letter",
+      "short_name": "New Form",
+      "description": "Draft a new form or official letter with AI",
+      "url": "/forms/new",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "My Forms",
+      "short_name": "Forms",
+      "description": "View and manage all your filled forms",
+      "url": "/forms",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "AI Voice Assistant",
+      "short_name": "Assistant",
+      "description": "Ask questions and navigate with voice",
+      "url": "/assistant",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Form Watcher",
+      "short_name": "Watcher",
+      "description": "Track form release and deadline alerts",
+      "url": "/form-watch",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "categories": [
+    "productivity",
+    "utilities",
+    "business",
+    "government"
+  ]
+}

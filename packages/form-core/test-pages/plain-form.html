@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Plain HTML Form Test Page</title>
+  <style>
+    body { font-family: sans-serif; padding: 24px; max-width: 600px; margin: 0 auto; }
+    .form-group { margin-bottom: 16px; }
+    label { display: block; margin-bottom: 4px; font-weight: bold; }
+    input, select, textarea { width: 100%; padding: 8px; box-sizing: border-box; }
+    .radio-group { display: flex; gap: 16px; }
+    .radio-group label { font-weight: normal; }
+  </style>
+</head>
+<body>
+  <h1>Government Service Registration (Demo)</h1>
+  <p>Test page for form-core readForm and applyFill verification.</p>
+
+  <form id="main-form" action="/submit" method="POST">
+    <fieldset>
+      <legend>Applicant Particulars</legend>
+      <div class="form-group">
+        <label for="first_name">First Name *</label>
+        <input type="text" id="first_name" name="first_name" required placeholder="Enter your first name">
+      </div>
+
+      <div class="form-group">
+        <label for="last_name">Last Name *</label>
+        <input type="text" id="last_name" name="last_name" required placeholder="Enter your last name">
+      </div>
+
+      <div class="form-group">
+        <label for="dob">Date of Birth</label>
+        <input type="date" id="dob" name="dob" required>
+      </div>
+
+      <div class="form-group">
+        <label>Gender</label>
+        <div class="radio-group">
+          <label><input type="radio" name="gender" value="male"> Male</label>
+          <label><input type="radio" name="gender" value="female"> Female</label>
+          <label><input type="radio" name="gender" value="other"> Other</label>
+        </div>
+      </div>
+    </fieldset>
+
+    <h2>Contact Information</h2>
+    <div class="form-group">
+      <label for="email_address">Email Address *</label>
+      <input type="email" id="email_address" name="email" required placeholder="name@example.com">
+    </div>
+
+    <div class="form-group">
+      <label for="phone_number">Mobile Number</label>
+      <input type="tel" id="phone_number" name="phone" placeholder="+91 98765 43210">
+    </div>
+
+    <div class="form-group">
+      <label for="state_select">State / Union Territory</label>
+      <select id="state_select" name="state">
+        <option value="">-- Select State --</option>
+        <option value="DL">Delhi (National Capital Territory)</option>
+        <option value="MH">Maharashtra</option>
+        <option value="KA">Karnataka</option>
+        <option value="TN">Tamil Nadu</option>
+        <option value="UP">Uttar Pradesh</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="residential_address">Full Residential Address</label>
+      <textarea id="residential_address" name="address" rows="3" placeholder="Enter full address with pincode"></textarea>
+    </div>
+
+    <div class="form-group">
+      <label>
+        <input type="checkbox" id="subscribe_updates" name="subscribe_updates" value="yes">
+        Receive status updates via SMS and WhatsApp
+      </label>
+    </div>
+
+    <h2>Verification & Documents</h2>
+    <!-- File upload: must return manual: true -->
+    <div class="form-group">
+      <label for="id_proof">Upload ID Proof (PDF or Image)</label>
+      <input type="file" id="id_proof" name="id_proof">
+    </div>
+
+    <!-- Sensitive Fields: must return sensitive: true, manual: true -->
+    <div class="form-group">
+      <label for="aadhaar_input">Aadhaar Card Number</label>
+      <input type="text" id="aadhaar_input" name="aadhaar_number" placeholder="XXXX-XXXX-XXXX">
+    </div>
+
+    <div class="form-group">
+      <label for="pan_input">Permanent Account Number (PAN)</label>
+      <input type="text" id="pan_input" name="pan_number" placeholder="ABCDE1234F">
+    </div>
+
+    <!-- Excluded Fields: must NEVER be read or logged -->
+    <div class="form-group">
+      <label for="portal_password">Portal Password (Must be skipped)</label>
+      <input type="password" id="portal_password" name="password">
+    </div>
+
+    <div class="form-group">
+      <label for="captcha_input">Enter Captcha Shown Above (Must be skipped)</label>
+      <input type="text" id="captcha_input" name="captcha" class="captcha-field">
+    </div>
+
+    <input type="hidden" name="csrf_token" value="hidden_secret_12345">
+
+    <button type="submit" id="submit_button">Submit Application</button>
+  </form>
+
+  <!-- Open Shadow Root Test Container -->
+  <div id="shadow-host" style="margin-top: 24px; border: 1px dashed #999; padding: 12px;"></div>
+
+  <!-- Same-origin iframe Test Container -->
+  <iframe id="test-iframe" srcdoc="
+    <html><body>
+      <label for='iframe_field'>Secondary Contact in Iframe</label>
+      <input id='iframe_field' name='emergency_contact' type='tel' placeholder='Emergency phone'>
+    </body></html>
+  " style="margin-top: 16px; width: 100%; height: 80px; border: 1px solid #ccc;"></iframe>
+
+  <script>
+    // Create an open shadow root with an input field
+    const host = document.getElementById('shadow-host');
+    if (host && host.attachShadow) {
+      const shadow = host.attachShadow({ mode: 'open' });
+      shadow.innerHTML = `
+        <label for="shadow_field">Shadow DOM Field (Emergency Name)</label>
+        <input id="shadow_field" name="shadow_emergency_name" type="text" placeholder="Shadow name">
+      `;
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Multi-Step Dynamic Form Test Page</title>
+  <style>
+    body { font-family: sans-serif; padding: 24px; max-width: 600px; margin: 0 auto; }
+    .step-indicator { display: flex; gap: 8px; margin-bottom: 20px; font-weight: bold; }
+    .step-tab { padding: 6px 14px; border-radius: 4px; background: #e2e8f0; }
+    .step-tab.active { background: #3b82f6; color: white; }
+    .step-container { border: 1px solid #cbd5e1; padding: 20px; border-radius: 8px; }
+    .form-group { margin-bottom: 14px; }
+    label { display: block; margin-bottom: 4px; font-weight: bold; }
+    input { width: 100%; padding: 8px; box-sizing: border-box; }
+    .btn-row { display: flex; justify-content: space-between; margin-top: 16px; }
+    button { padding: 8px 16px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>Multi-Step Application Wizard</h1>
+
+  <div class="step-indicator">
+    <div id="tab-1" class="step-tab active">Step 1: Identity</div>
+    <div id="tab-2" class="step-tab">Step 2: Address</div>
+    <div id="tab-3" class="step-tab">Step 3: Review</div>
+  </div>
+
+  <div id="step-content" class="step-container">
+    <!-- Step 1 content loaded initially -->
+    <div id="step-1" class="step-panel">
+      <h2>Step 1: Identity Particulars</h2>
+      <div class="form-group">
+        <label for="step1-fullname">Full Name</label>
+        <input id="step1-fullname" name="fullname" placeholder="Enter full name">
+      </div>
+      <div class="form-group">
+        <label for="step1-dob">Birth Date</label>
+        <input id="step1-dob" name="dob" type="date">
+      </div>
+      <div class="btn-row">
+        <div></div>
+        <button type="button" id="next-to-step2" onclick="goToStep(2)">Next: Address →</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function goToStep(stepNum) {
+      window.location.hash = '#step=' + stepNum;
+
+      document.querySelectorAll('.step-tab').forEach((tab, i) => {
+        tab.classList.toggle('active', i + 1 === stepNum);
+      });
+
+      const container = document.getElementById('step-content');
+
+      if (stepNum === 2) {
+        // Dynamically inject step 2 into DOM
+        container.innerHTML = `
+          <div id="step-2" class="step-panel">
+            <h2>Step 2: Address Particulars</h2>
+            <div class="form-group">
+              <label for="step2-city">City</label>
+              <input id="step2-city" name="city" placeholder="Enter city name">
+            </div>
+            <div class="form-group">
+              <label for="step2-pincode">Postal Pincode</label>
+              <input id="step2-pincode" name="pincode" type="number" placeholder="6-digit pincode">
+            </div>
+            <div class="btn-row">
+              <button type="button" onclick="goToStep(1)">← Back</button>
+              <button type="button" id="next-to-step3" onclick="goToStep(3)">Next: Review →</button>
+            </div>
+          </div>
+        `;
+      } else if (stepNum === 3) {
+        container.innerHTML = `
+          <div id="step-3" class="step-panel">
+            <h2>Step 3: Review Details</h2>
+            <div class="form-group">
+              <label for="step3-remarks">Applicant Remarks</label>
+              <input id="step3-remarks" name="remarks" placeholder="Optional comments">
+            </div>
+            <div class="btn-row">
+              <button type="button" onclick="goToStep(2)">← Back</button>
+              <span>Ready for final review</span>
+            </div>
+          </div>
+        `;
+      } else {
+        container.innerHTML = `
+          <div id="step-1" class="step-panel">
+            <h2>Step 1: Identity Particulars</h2>
+            <div class="form-group">
+              <label for="step1-fullname">Full Name</label>
+              <input id="step1-fullname" name="fullname" placeholder="Enter full name">
+            </div>
+            <div class="form-group">
+              <label for="step1-dob">Birth Date</label>
+              <input id="step1-dob" name="dob" type="date">
+            </div>
+            <div class="btn-row">
+              <div></div>
+              <button type="button" id="next-to-step2" onclick="goToStep(2)">Next: Address →</button>
+            </div>
+          </div>
+        `;
+      }
+    }
+  </script>
+</body>
+</html>

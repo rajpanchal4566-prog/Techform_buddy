@@ -1,0 +1,308 @@
+openapi: 3.0.3
+info:
+  title: TechForm Buddy REST API
+  description: >
+    Multilingual AI Information, Assistance & Service Automation Platform (PS-15).
+    Provides natural language understanding, form mapping, document understanding,
+    grievance handling, and proactive scheme recommendations across 11 Indian languages.
+  version: 1.0.0
+  contact:
+    name: TechForm Buddy Engineering Team
+    url: https://github.com/techformbuddy
+servers:
+  - url: http://localhost:3000
+    description: Local development server
+  - url: https://api.techformbuddy.gov.in
+    description: Production gateway
+
+paths:
+  /api/health:
+    get:
+      summary: Health check probe
+      description: Returns health status, uptime, and AI service configuration state.
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  database:
+                    type: string
+                    example: connected
+                  geminiConfigured:
+                    type: boolean
+                    example: true
+                  uptimeSeconds:
+                    type: number
+                    example: 3600
+
+  /api/assistant:
+    post:
+      summary: NLU Planner & Knowledge Q&A Engine
+      description: Evaluates spoken or typed natural language utterances in 11 Indian languages, returning an answer with citations or an executable action plan.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - utterance
+              properties:
+                utterance:
+                  type: string
+                  example: "mujhe student internship form bharna hai"
+                language:
+                  type: string
+                  example: "hi"
+                currentPath:
+                  type: string
+                  example: "/forms"
+      responses:
+        '200':
+          description: Response containing answer or multi-step execution plan
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    enum: [plan, answer, clarification]
+                  text:
+                    type: string
+                  plan:
+                    type: object
+                    properties:
+                      intent:
+                        type: string
+                      steps:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            action:
+                              type: string
+                            params:
+                              type: object
+                  citations:
+                    type: array
+                    items:
+                      type: string
+
+  /api/documents/analyze:
+    post:
+      summary: Multimodal Document Understanding & OCR
+      description: Analyzes an uploaded document image or PDF, extracts structured entities (names, dates, amounts, deadlines), identifies risks, and formats a 5-part summary.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - text
+              properties:
+                text:
+                  type: string
+                documentType:
+                  type: string
+                  example: "marksheet"
+                language:
+                  type: string
+                  example: "en"
+      responses:
+        '200':
+          description: Structured extraction output
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  summary:
+                    type: string
+                  facts:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        label:
+                          type: string
+                        value:
+                          type: string
+                  nextSteps:
+                    type: array
+                    items:
+                      type: string
+                  risks:
+                    type: array
+                    items:
+                      type: string
+                  suggestedProfileUpdates:
+                    type: object
+
+  /api/grievances:
+    get:
+      summary: List or track grievances
+      parameters:
+        - in: query
+          name: trackingNumber
+          schema:
+            type: string
+          description: Filter or lookup by unique tracking number (e.g. TFB-EDU-981240)
+      responses:
+        '200':
+          description: Grievance record or collection
+    post:
+      summary: File an official grievance or institutional request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - domain
+                - department
+                - description
+              properties:
+                title:
+                  type: string
+                domain:
+                  type: string
+                  enum: [government, education, healthcare, banking, business, customer_support, institutions]
+                department:
+                  type: string
+                description:
+                  type: string
+                priority:
+                  type: string
+                  enum: [low, medium, high, urgent]
+      responses:
+        '201':
+          description: Grievance created successfully with tracking number
+
+  /api/recommendations:
+    get:
+      summary: Deterministic Scheme Eligibility Evaluator
+      description: Evaluates citizen profile demographics against official criteria for national schemes.
+      responses:
+        '200':
+          description: List of eligible and almost-eligible schemes with rationale
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  eligible:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        title:
+                          type: string
+                        whyYouQualify:
+                          type: array
+                          items:
+                            type: string
+                  almostEligible:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        title:
+                          type: string
+                        whatIsMissing:
+                          type: array
+                          items:
+                            type: string
+
+  /api/forms:
+    get:
+      summary: List generated documents and forms
+      responses:
+        '200':
+          description: Array of saved documents
+    post:
+      summary: Create or generate a structured document
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - templateId
+                - data
+              properties:
+                templateId:
+                  type: string
+                title:
+                  type: string
+                data:
+                  type: object
+
+  /api/forms/{id}/download:
+    get:
+      summary: Download document in PDF, DOCX, or TXT
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: format
+          schema:
+            type: string
+            enum: [pdf, docx, txt]
+            default: pdf
+      responses:
+        '200':
+          description: Binary file stream
+
+  /api/forms/{id}/package:
+    get:
+      summary: Download complete ZIP package with attached verification documents
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ZIP archive binary stream
+
+  /api/tts:
+    post:
+      summary: Server-side multilingual speech synthesis
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - text
+                - language
+              properties:
+                text:
+                  type: string
+                language:
+                  type: string
+                  example: "hi"
+      responses:
+        '200':
+          description: Audio stream (audio/mpeg)
+
