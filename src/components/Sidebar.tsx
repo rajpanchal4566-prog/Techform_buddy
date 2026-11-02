@@ -10,15 +10,11 @@ export const SIDEBAR_NAV_ITEMS = [
   { href: '/forms', label: 'Forms', icon: 'forms' },
   { href: '/applications', label: 'My Applications', icon: 'tracker' },
   { href: '/documents', label: 'Documents', icon: 'documents' },
-  { href: '/grievances', label: 'Grievances', icon: 'grievances' },
   { href: '/assistant', label: 'AI Assistant', icon: 'assistant' },
-  { href: '/arena', label: 'Defender Game', icon: 'arena' },
   { href: '/browser', label: 'Portal Launcher', icon: 'browser' },
   { href: '/form-watch', label: 'Form Watch', icon: 'watch' },
-  { href: '/demo-portal', label: 'Demo Portal', icon: 'demo-portal' },
   { href: '/profile', label: 'Profile', icon: 'profile' },
   { href: '/notifications', label: 'Alerts', icon: 'notifications' },
-  { href: '/status', label: 'Status', icon: 'status' },
   { href: '/settings', label: 'Settings', icon: 'settings' },
 ];
 

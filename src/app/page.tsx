@@ -118,7 +118,7 @@ export default function LandingPage() {
       </header>
 
       {/* ─────────────────────────────────────────────────────────────
-          2. IMMERSIVE HERO SECTION WITH VIKRANT UNIVERSITY BACKDROP
+          2. IMMERSIVE HERO SECTION
           ───────────────────────────────────────────────────────────── */}
       <section id="hero" className="lp-hero-section">
         <div className="lp-hero-overlay" />
@@ -202,22 +202,51 @@ export default function LandingPage() {
           </div>
 
           {/* ─────────────────────────────────────────────────────────
-              RIGHT COLUMN — VIKRANT UNIVERSITY CRISP HTML PLAQUES
+              RIGHT COLUMN — LIVE ASSISTANT SHOWCASE & METRICS
               ───────────────────────────────────────────────────────── */}
           <div className="lp-hero-right">
-            {/* Crisp Architectural HTML Plaque over the building architrave */}
-            <div className="lp-building-architrave" aria-label="Vikrant University">
-              <span className="lp-frieze-hindi">विक्रांत विश्वविद्यालय</span>
-              <span className="lp-frieze-english">VIKRANT UNIVERSITY</span>
-            </div>
+            <div className="lp-hero-showcase-card">
+              <div className="lp-showcase-header">
+                <div className="lp-showcase-avatar">
+                  <BuddyMascot size={36} state="idle" />
+                </div>
+                <div>
+                  <div className="lp-showcase-badge">
+                    <span className="lp-pulse-dot" />
+                    <span>AI Co-Pilot • Ready</span>
+                  </div>
+                  <h3 className="lp-showcase-title">National Digital Assistant</h3>
+                </div>
+              </div>
 
-            {/* Official Academic Partner Card */}
-            <div className="lp-university-partner-card">
-              <span className="lp-partner-icon">🏛️</span>
-              <div className="lp-partner-text-block">
-                <div className="lp-partner-hindi">विक्रांत विश्वविद्यालय</div>
-                <div className="lp-partner-english">VIKRANT UNIVERSITY</div>
-                <div className="lp-partner-tagline">Academic &amp; Research Innovation Partner</div>
+              <div className="lp-showcase-form-preview">
+                <div className="lp-preview-row">
+                  <span className="lp-preview-label">Active Portal</span>
+                  <span className="lp-preview-value">National Scholarship Portal (NSP)</span>
+                </div>
+                <div className="lp-preview-row">
+                  <span className="lp-preview-label">Field Autofill</span>
+                  <span className="lp-preview-tag">Verified 99.4% ✓</span>
+                </div>
+                <div className="lp-preview-row">
+                  <span className="lp-preview-label">Citizen Privacy</span>
+                  <span className="lp-preview-tag-sec">256-Bit Encrypted 🔒</span>
+                </div>
+              </div>
+
+              <div className="lp-showcase-stats-grid">
+                <div className="lp-showcase-stat">
+                  <span className="lp-mini-stat-num">500+</span>
+                  <span className="lp-mini-stat-lbl">Portals</span>
+                </div>
+                <div className="lp-showcase-stat">
+                  <span className="lp-mini-stat-num">10+</span>
+                  <span className="lp-mini-stat-lbl">Languages</span>
+                </div>
+                <div className="lp-showcase-stat">
+                  <span className="lp-mini-stat-num">100%</span>
+                  <span className="lp-mini-stat-lbl">Citizen Privacy</span>
+                </div>
               </div>
             </div>
           </div>
@@ -295,24 +324,24 @@ export default function LandingPage() {
 
           {/* Feature 6 */}
           <div className="lp-feature-card">
-            <div className="lp-card-icon-wrap">⚖️</div>
-            <h3 className="lp-card-heading">Grievance Redressal Assistant</h3>
+            <div className="lp-card-icon-wrap">🎯</div>
+            <h3 className="lp-card-heading">Personalized Scheme Recommendations</h3>
             <p className="lp-card-body">
-              File formal grievances across public departments with AI-assisted drafting, department
-              classification, and live resolution tracking.
+              Deterministic statutory eligibility evaluation matching your verified profile attributes to
+              central and state schemes without repetitive paperwork.
             </p>
-            <div className="lp-card-tag">Public Service SLA</div>
+            <div className="lp-card-tag">Zero Hallucination</div>
           </div>
         </div>
       </section>
 
       {/* ─────────────────────────────────────────────────────────────
-          4. ABOUT & INSTITUTIONAL PARTNERSHIP SECTION
+          4. ABOUT & NATIONAL COLLABORATION SECTION
           ───────────────────────────────────────────────────────────── */}
       <section id="about" className="lp-about-section">
         <div className="lp-about-container">
           <div className="lp-about-copy">
-            <span className="lp-section-eyebrow">Academic &amp; Governance Collaboration</span>
+            <span className="lp-section-eyebrow">Digital Governance Initiative</span>
             <h2>Bridging the Distance Between Citizens &amp; Public Services</h2>
             <p>
               Navigating government portals and institutional procedures can be confusing and time-consuming.
@@ -320,14 +349,14 @@ export default function LandingPage() {
               by your side.
             </p>
 
-            {/* University Collaboration Highlight */}
+            {/* National Initiative Highlight */}
             <div className="lp-university-partner-highlight">
-              <div className="lp-highlight-hindi">विक्रांत विश्वविद्यालय</div>
-              <div className="lp-highlight-english">VIKRANT UNIVERSITY</div>
+              <div className="lp-highlight-hindi">डिजिटल भारत सशक्त नागरिक</div>
+              <div className="lp-highlight-english">DIGITAL INDIA CITIZEN EMPOWERMENT</div>
               <p className="lp-highlight-desc">
-                In strategic academic collaboration with <strong>विक्रांत विश्वविद्यालय (VIKRANT UNIVERSITY)</strong>,
-                we develop ethical AI models, privacy-preserving client sandboxes, and multilingual speech tools
-                designed to empower Indian youth and citizens everywhere.
+                Engineered in full alignment with the <strong>Digital India</strong> vision, TechForm Buddy develops
+                ethical AI models, privacy-preserving client sandboxes, and multilingual voice tools designed to empower
+                students, farmers, job seekers, and citizens across every state.
               </p>
             </div>
 
@@ -387,24 +416,24 @@ export default function LandingPage() {
             <ul>
               <li><Link href="/forms">Form Detection</Link></li>
               <li><Link href="/documents">Document OCR</Link></li>
-              <li><Link href="/grievances">Grievances</Link></li>
-              <li><Link href="/status">System Health</Link></li>
+              <li><Link href="/applications">My Applications</Link></li>
+              <li><Link href="/form-watch">Form Watch</Link></li>
             </ul>
           </div>
 
           <div className="lp-footer-col">
-            <h4>Institutional</h4>
+            <h4>Initiatives</h4>
             <ul>
-              <li><span>विक्रांत विश्वविद्यालय</span></li>
-              <li><span>VIKRANT UNIVERSITY Campus</span></li>
               <li><span>Digital India Initiative</span></li>
+              <li><span>National Citizen Portal</span></li>
+              <li><span>Multilingual Voice AI</span></li>
               <li><span>256-bit AES Privacy</span></li>
             </ul>
           </div>
         </div>
 
         <div className="lp-footer-bottom">
-          <div>© {new Date().getFullYear()} TechForm Buddy. Developed in collaboration with विक्रांत विश्वविद्यालय (VIKRANT UNIVERSITY).</div>
+          <div>© {new Date().getFullYear()} TechForm Buddy. National Digital Services &amp; Citizen Assistance Platform.</div>
           <div style={{ display: 'flex', gap: '20px' }}>
             <span>Privacy Policy</span>
             <span>Terms of Service</span>

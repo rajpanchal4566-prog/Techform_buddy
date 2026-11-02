@@ -340,9 +340,7 @@ export default function BrowserPortalLauncherPage() {
               </div>
             </div>
           </div>
-          <Link href="/demo-portal" className="btn btn-sm" style={{ background: '#059669', color: 'white', whiteSpace: 'nowrap', fontWeight: 600 }}>
-            Try Demo Sandbox 🧪
-          </Link>
+
         </div>
 
         {/* EXTENSION DETECTION & STATUS CARD */}

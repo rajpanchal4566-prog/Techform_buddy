@@ -146,10 +146,9 @@
 .auth-arena {
   flex: 1;
   position: relative;
-  background-image: url('/images/vikrant-university.jpg');
-  background-size: cover;
-  background-position: center 25%;
-  background-repeat: no-repeat;
+  background: radial-gradient(circle at 85% 30%, rgba(245, 158, 11, 0.12) 0%, transparent 45%),
+              radial-gradient(circle at 15% 80%, rgba(232, 210, 181, 0.08) 0%, transparent 50%),
+              linear-gradient(135deg, #1c0203 0%, #2f0406 35%, #430507 70%, #590907 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -160,15 +159,10 @@
 .auth-arena-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    90deg,
-    rgba(53, 4, 7, 0.99) 0%,
-    rgba(53, 4, 7, 0.97) 50%,
-    rgba(53, 4, 7, 0.85) 54%,
-    rgba(53, 4, 7, 0.4) 64%,
-    rgba(35, 3, 5, 0.15) 80%,
-    rgba(35, 3, 5, 0.35) 100%
-  );
+  background: radial-gradient(circle at 50% 50%, rgba(89, 9, 7, 0.3) 0%, rgba(35, 4, 7, 0.6) 100%);
+  background-image: radial-gradient(rgba(232, 210, 181, 0.06) 1px, transparent 1px);
+  background-size: 32px 32px;
+  pointer-events: none;
   z-index: 1;
 }
 

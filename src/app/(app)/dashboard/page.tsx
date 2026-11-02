@@ -177,27 +177,7 @@ export default function DashboardPage() {
             </div>
           </section>
 
-          <Link
-            href="/arena"
-            className="card card-hover"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '14px',
-              padding: '16px 20px',
-              color: '#f8fafc',
-              background: '#0f172a',
-              border: '1px solid rgba(139, 92, 246, 0.45)',
-              textDecoration: 'none',
-            }}
-          >
-            <span aria-hidden="true" style={{ fontSize: 26 }}>🛡️</span>
-            <span style={{ flex: 1 }}>
-              <strong style={{ display: 'block', color: '#ffffff' }}>Play Buddy Defender</strong>
-              <span style={{ color: '#cbd5e1', fontSize: 13 }}>Protect your forms in a quick safety arcade game.</span>
-            </span>
-            <span aria-hidden="true" style={{ color: '#bfdbfe', fontWeight: 700 }}>Play →</span>
-          </Link>
+
 
           {/* Personalized Scheme Recommendations (Requirement B4) */}
           <section id="scheme-recommendations-section" className="dashboard-section">
