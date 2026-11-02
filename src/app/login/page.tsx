@@ -5,7 +5,6 @@ import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { validatePassword, getPasswordStrength } from '@/lib/auth';
-import BuddyMascot from '@/components/BuddyMascot';
 import './auth.css';
 
 export default function LoginPage() {
@@ -16,13 +15,10 @@ export default function LoginPage() {
 
   // Login form state
   const [form, setForm] = useState({ email: '', password: '' });
-  const [rememberMe, setRememberMe] = useState(true);
-  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [aadhaarLoading, setAadhaarLoading] = useState(false);
 
   // Forgot Password state
   const [resetEmail, setResetEmail] = useState('');
@@ -62,14 +58,6 @@ export default function LoginPage() {
       setError('Failed to initiate Google sign in. Please try again.');
       setGoogleLoading(false);
     }
-  };
-
-  const handleAadhaarClick = () => {
-    setAadhaarLoading(true);
-    setTimeout(() => {
-      setError('Aadhaar OTP gateway is initializing for sandbox mode. Please sign in with email or Google.');
-      setAadhaarLoading(false);
-    }, 600);
   };
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
@@ -243,48 +231,47 @@ export default function LoginPage() {
 
   return (
     <div className="auth-page">
-      <div className="auth-container">
-        {/* Mascot & Brand Header */}
+      <div className="auth-container animate-fadeIn">
         <div className="auth-header">
-          <div className="auth-logo-badge">
-            <BuddyMascot size={54} state="idle" />
+          <div className="auth-logo">
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="32" height="32" rx="8" fill="#3b82f6" />
+              <path
+                d="M8 12h16M8 16h12M8 20h14M22 10l4 4-4 4"
+                stroke="white"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
           </div>
           <h1>
             {mode === 'login'
-              ? 'Welcome to TechForm Buddy'
+              ? 'Welcome back'
               : mode === 'forgot_request'
               ? 'Reset Password'
               : 'Set New Password'}
           </h1>
           <p>
             {mode === 'login'
-              ? 'Sign in to access your digital citizen services and AI planner'
+              ? 'Sign in to your TechForm Buddy account'
               : mode === 'forgot_request'
-              ? 'Enter your registered email to receive a 6-digit recovery code'
+              ? 'Enter your email to receive a 6-digit password reset code in English'
               : `Enter the 6-digit code sent to ${resetEmail} and your new password`}
           </p>
         </div>
 
-        {/* Mode Tabs: [ Login ] [ Register ] */}
-        {mode === 'login' && (
-          <div className="auth-mode-tabs">
-            <button type="button" className="auth-mode-tab active">
-              Login
-            </button>
-            <Link href="/register" className="auth-mode-tab">
-              Register
-            </Link>
-          </div>
-        )}
-
         <div className="auth-form">
           {error && (
-            <div className="auth-error" role="alert">
-              <span style={{ fontSize: '16px' }}>⚠️</span>
+            <div className="auth-error animate-fadeIn" role="alert">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
+                <path d="M8 5v3M8 10.5v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
               <div>
                 <div>{error}</div>
                 {typeof attemptsLeft === 'number' && attemptsLeft > 0 && (
-                  <div style={{ fontSize: '11.5px', marginTop: '3px', opacity: 0.9 }}>
+                  <div style={{ fontSize: '11px', marginTop: '3px', opacity: 0.9 }}>
                     Attempts remaining: {attemptsLeft}
                   </div>
                 )}
@@ -293,8 +280,17 @@ export default function LoginPage() {
           )}
 
           {successMsg && !error && (
-            <div className="auth-success">
-              <span>✓</span> {successMsg}
+            <div
+              style={{
+                fontSize: '13px',
+                color: '#10b981',
+                background: 'rgba(16, 185, 129, 0.12)',
+                padding: '10px 14px',
+                borderRadius: '6px',
+                border: '1px solid rgba(16, 185, 129, 0.3)',
+              }}
+            >
+              ✓ {successMsg}
             </div>
           )}
 
@@ -328,25 +324,14 @@ export default function LoginPage() {
                 {googleLoading ? 'Connecting to Google...' : 'Continue with Google'}
               </button>
 
-              <button
-                type="button"
-                className="btn-google"
-                style={{ marginTop: '2px' }}
-                onClick={handleAadhaarClick}
-                disabled={aadhaarLoading || loading}
-              >
-                <span style={{ fontSize: '18px' }}>🪪</span>
-                {aadhaarLoading ? 'Verifying Gateway...' : 'Continue with Aadhaar'}
-              </button>
-
               <div className="auth-divider">
                 <span>or sign in with email</span>
               </div>
 
-              <form onSubmit={handleLoginSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <form onSubmit={handleLoginSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
                 <div className="input-group">
                   <label className="input-label" htmlFor="login-email">
-                    Email address
+                    Email
                   </label>
                   <div className="input-with-icon">
                     <svg className="input-icon" viewBox="0 0 18 18" fill="none">
@@ -372,17 +357,40 @@ export default function LoginPage() {
                 </div>
 
                 <div className="input-group">
-                  <label className="input-label" htmlFor="login-password">
-                    Password
-                  </label>
-                  <div className="input-with-icon">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <label className="input-label" htmlFor="login-password" style={{ margin: 0 }}>
+                      Password
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setResetEmail(form.email);
+                        setError('');
+                        setSuccessMsg('');
+                        setMode('forgot_request');
+                      }}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#3b82f6',
+                        fontSize: '12px',
+                        cursor: 'pointer',
+                        fontWeight: 600,
+                        padding: 0,
+                      }}
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
+
+                  <div className="input-with-icon" style={{ marginTop: '6px' }}>
                     <svg className="input-icon" viewBox="0 0 18 18" fill="none">
                       <rect x="4" y="8" width="10" height="8" rx="2" stroke="currentColor" strokeWidth="1.5" />
                       <path d="M6 8V6a3 3 0 116 0v2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                     </svg>
                     <input
                       id="login-password"
-                      type={showPassword ? 'text' : 'password'}
+                      type="password"
                       className="input"
                       placeholder="Enter your password"
                       value={form.password}
@@ -390,59 +398,19 @@ export default function LoginPage() {
                       required
                       autoComplete="current-password"
                     />
-                    <button
-                      type="button"
-                      className="pwd-toggle-btn"
-                      onClick={() => setShowPassword(!showPassword)}
-                      aria-label={showPassword ? 'Hide password' : 'Show password'}
-                    >
-                      {showPassword ? '👁️' : '👁️‍🗨️'}
-                    </button>
                   </div>
                 </div>
 
-                <div className="auth-options-row">
-                  <label className="auth-remember-label">
-                    <input
-                      type="checkbox"
-                      checked={rememberMe}
-                      onChange={(e) => setRememberMe(e.target.checked)}
-                    />
-                    <span>Remember me</span>
-                  </label>
-
-                  <button
-                    type="button"
-                    className="auth-forgot-link"
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-                    onClick={() => {
-                      setResetEmail(form.email);
-                      setError('');
-                      setSuccessMsg('');
-                      setMode('forgot_request');
-                    }}
-                  >
-                    Forgot password?
-                  </button>
-                </div>
-
-                <button type="submit" className="auth-submit-btn" disabled={loading}>
-                  {loading ? 'Signing in...' : 'Sign In →'}
+                <button type="submit" className="btn btn-primary btn-lg auth-submit" disabled={loading}>
+                  {loading ? 'Signing in...' : 'Sign in'}
                 </button>
-
-                <div className="auth-trust-badge">
-                  <svg viewBox="0 0 16 16" fill="currentColor">
-                    <path fillRule="evenodd" d="M8 0c-.69 0-1.843.265-2.928.56-1.11.3-2.229.655-2.887.87a1.54 1.54 0 0 0-1.044 1.262c-.596 4.477.787 7.795 2.464 9.99 1.579 2.065 3.48 3.018 4.096 3.263a.5.5 0 0 0 .398 0c.616-.245 2.517-1.198 4.096-3.263 1.677-2.195 3.06-5.513 2.464-9.99a1.54 1.54 0 0 0-1.044-1.263 62.7 62.7 0 0 0-2.887-.87C9.843.266 8.69 0 8 0zm2.146 5.854a.5.5 0 0 1 .708.708l-3.5 3.5a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7 9.043l3.146-3.189z" />
-                  </svg>
-                  <span>Protected with 256-bit encryption • Citizen Security</span>
-                </div>
               </form>
             </>
           )}
 
           {/* FORGOT PASSWORD STEP 1: REQUEST CODE */}
           {mode === 'forgot_request' && (
-            <form onSubmit={handleRequestResetCode} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <form onSubmit={handleRequestResetCode} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
               <div className="input-group">
                 <label className="input-label" htmlFor="forgot-email">
                   Registered Email Address
@@ -472,7 +440,7 @@ export default function LoginPage() {
 
               <button
                 type="submit"
-                className="auth-submit-btn"
+                className="btn btn-primary btn-lg auth-submit"
                 disabled={loading || resendCooldown > 0}
               >
                 {loading
@@ -498,10 +466,10 @@ export default function LoginPage() {
 
           {/* FORGOT PASSWORD STEP 2: VERIFY OTP & SET NEW PASSWORD */}
           {mode === 'forgot_reset' && (
-            <form onSubmit={handleResetPasswordSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <form onSubmit={handleResetPasswordSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
               <div className="input-group">
                 <label className="input-label">6-Digit Reset Code (from email)</label>
-                <div className="otp-container" dir="ltr">
+                <div className="otp-inputs-grid" dir="ltr">
                   {digits.map((digit, idx) => (
                     <input
                       key={idx}
@@ -513,7 +481,7 @@ export default function LoginPage() {
                       inputMode="numeric"
                       pattern="[0-9]*"
                       maxLength={1}
-                      className="otp-digit-input"
+                      className={`otp-digit-box ${digit ? 'filled' : ''}`}
                       value={digit}
                       onChange={(e) => handleDigitChange(idx, e.target.value)}
                       onKeyDown={(e) => handleDigitKeyDown(idx, e)}
@@ -541,13 +509,11 @@ export default function LoginPage() {
 
                 {/* Password Strength Meter */}
                 {newPassword && (
-                  <div className="password-strength-container">
+                  <div style={{ marginTop: '8px' }}>
                     <div className="strength-bar-track">
-                      <div className={`strength-bar-segment ${passwordStrength.score >= 1 ? 'active-weak' : ''}`} />
-                      <div className={`strength-bar-segment ${passwordStrength.score >= 2 ? 'active-fair' : ''}`} />
-                      <div className={`strength-bar-segment ${passwordStrength.score >= 3 ? 'active-strong' : ''}`} />
+                      <div className={`strength-bar-fill score-${passwordStrength.score}`} />
                     </div>
-                    <div className="strength-label-text">
+                    <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)', marginTop: '4px' }}>
                       Strength: <strong>{passwordStrength.label}</strong>
                     </div>
                   </div>
@@ -571,7 +537,7 @@ export default function LoginPage() {
 
               <button
                 type="submit"
-                className="auth-submit-btn"
+                className="btn btn-primary btn-lg auth-submit"
                 disabled={loading || digits.join('').length !== 6 || !newPassword}
               >
                 {loading ? 'Resetting Password...' : 'Reset Password'}
@@ -585,7 +551,7 @@ export default function LoginPage() {
                   style={{
                     background: 'none',
                     border: 'none',
-                    color: resendCooldown > 0 ? '#a5a79b' : '#590907',
+                    color: resendCooldown > 0 ? 'var(--color-text-tertiary)' : '#3b82f6',
                     cursor: resendCooldown > 0 ? 'not-allowed' : 'pointer',
                     fontSize: '12px',
                     fontWeight: 600,
@@ -604,7 +570,7 @@ export default function LoginPage() {
                   style={{
                     background: 'none',
                     border: 'none',
-                    color: '#746a63',
+                    color: 'var(--color-text-secondary)',
                     cursor: 'pointer',
                     fontSize: '12px',
                   }}
@@ -618,7 +584,7 @@ export default function LoginPage() {
 
         <div className="auth-footer">
           <p>
-            Don&apos;t have an account? <Link href="/register">Create one for free</Link>
+            Don&apos;t have an account? <Link href="/register">Create one</Link>
           </p>
         </div>
       </div>

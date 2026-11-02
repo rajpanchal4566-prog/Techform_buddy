@@ -5,7 +5,6 @@ import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import '../login/auth.css';
-import BuddyMascot from '@/components/BuddyMascot';
 import { suggestEmailCorrection } from '@/lib/emailValidation';
 import { getPasswordStrength, validatePassword } from '@/lib/auth';
 
@@ -161,23 +160,16 @@ export default function RegisterPage() {
 
   return (
     <div className="auth-page">
-      <div className="auth-container">
+      <div className="auth-container animate-fadeIn">
         <div className="auth-header">
-          <div className="auth-logo-badge">
-            <BuddyMascot size={54} state="idle" />
+          <div className="auth-logo">
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="32" height="32" rx="8" fill="#3b82f6" />
+              <path d="M8 12h16M8 16h12M8 20h14M22 10l4 4-4 4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
           </div>
-          <h1>Create your Citizen Account</h1>
-          <p>Get started with TechForm Buddy intelligent digital assistance</p>
-        </div>
-
-        {/* Mode Tabs: [ Login ] [ Register ] */}
-        <div className="auth-mode-tabs">
-          <Link href="/login" className="auth-mode-tab">
-            Login
-          </Link>
-          <button type="button" className="auth-mode-tab active">
-            Register
-          </button>
+          <h1>Create account</h1>
+          <p>Get started with TechForm Buddy</p>
         </div>
 
         <div className="auth-form">
@@ -381,7 +373,7 @@ export default function RegisterPage() {
 
             <button
               type="submit"
-              className="auth-submit-btn"
+              className="btn btn-primary btn-lg auth-submit"
               disabled={loading || (form.password.length > 0 && !passwordValidation.valid)}
             >
               {loading ? (
@@ -393,16 +385,9 @@ export default function RegisterPage() {
                   Creating account...
                 </span>
               ) : (
-                'Create Citizen Account →'
+                'Create account'
               )}
             </button>
-
-            <div className="auth-trust-badge">
-              <svg viewBox="0 0 16 16" fill="currentColor">
-                <path fillRule="evenodd" d="M8 0c-.69 0-1.843.265-2.928.56-1.11.3-2.229.655-2.887.87a1.54 1.54 0 0 0-1.044 1.262c-.596 4.477.787 7.795 2.464 9.99 1.579 2.065 3.48 3.018 4.096 3.263a.5.5 0 0 0 .398 0c.616-.245 2.517-1.198 4.096-3.263 1.677-2.195 3.06-5.513 2.464-9.99a1.54 1.54 0 0 0-1.044-1.263 62.7 62.7 0 0 0-2.887-.87C9.843.266 8.69 0 8 0zm2.146 5.854a.5.5 0 0 1 .708.708l-3.5 3.5a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7 9.043l3.146-3.189z" />
-              </svg>
-              <span>Protected with 256-bit encryption • Citizen Security</span>
-            </div>
           </form>
         </div>
 

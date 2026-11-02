@@ -425,7 +425,7 @@
 
 /* ── Open with Buddy Button ── */
 .fw-btn-buddy {
-  background: linear-gradient(135deg, var(--color-burgundy-deep), var(--color-burgundy-dark));
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
   color: white;
   border: none;
   border-radius: 8px;
@@ -437,14 +437,7 @@
   align-items: center;
   gap: 6px;
   transition: all var(--transition-fast);
-  box-shadow: 0 1px 3px rgba(89, 9, 7, 0.25);
-}
-
-.fw-btn-buddy:hover {
-  background: linear-gradient(135deg, var(--color-burgundy-dark), #250305);
-  box-shadow: 0 3px 8px rgba(89, 9, 7, 0.35);
-  transform: translateY(-1px);
-}
+  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.2);
 }
 
 .fw-btn-buddy:hover {
