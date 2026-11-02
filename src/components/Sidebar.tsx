@@ -12,6 +12,7 @@ export const SIDEBAR_NAV_ITEMS = [
   { href: '/documents', label: 'Documents', icon: 'documents' },
   { href: '/grievances', label: 'Grievances', icon: 'grievances' },
   { href: '/assistant', label: 'AI Assistant', icon: 'assistant' },
+  { href: '/arena', label: 'Defender Game', icon: 'arena' },
   { href: '/browser', label: 'Portal Launcher', icon: 'browser' },
   { href: '/form-watch', label: 'Form Watch', icon: 'watch' },
   { href: '/demo-portal', label: 'Demo Portal', icon: 'demo-portal' },
@@ -78,6 +79,13 @@ export const getNavIcon = (name: string) => {
           <circle cx="12" cy="12" r="10" />
           <line x1="2" y1="12" x2="22" y2="12" />
           <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
+        </svg>
+      );
+    case 'arena':
+      return (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 3 20 6v5c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-3Z" />
+          <path d="M8 12h8M12 8v8" />
         </svg>
       );
     case 'watch':
