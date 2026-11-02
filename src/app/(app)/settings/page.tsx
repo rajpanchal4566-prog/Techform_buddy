@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAppHeader } from '@/components/AppShellContext';
 import PasswordSecurityCard from '@/components/PasswordSecurityCard';
+import { isThemePreference, useTheme } from '@/components/ThemeProvider';
 import { useRegisterActions } from '@/lib/actionRegistry';
 import {
   SUPPORTED_LANGUAGES,
@@ -25,6 +26,7 @@ import {
 import './settings.css';
 
 export default function SettingsPage() {
+  const { preference: themePreference, setPreference: setThemePreference } = useTheme();
   const { data: session, status } = useSession();
   const router = useRouter();
 
@@ -279,12 +281,38 @@ export default function SettingsPage() {
   const matchingVoices = voiceRes.matchingVoices;
 
   const capabilityColor =
-    capability.level === 'full' ? '#22c55e' :
-    capability.level === 'speech_only' ? '#3b82f6' :
-    capability.level === 'text_only' ? '#f59e0b' : '#ef4444';
+    capability.level === 'full' ? 'var(--tfb-success-text)' :
+    capability.level === 'speech_only' ? 'var(--tfb-info-text)' :
+    capability.level === 'text_only' ? 'var(--tfb-warning-text)' : 'var(--tfb-danger-text)';
 
   return (
     <div className="settings-container animate-fadeIn">
+          <div className="settings-card card">
+            <div className="settings-card-header">
+              <h2>Appearance</h2>
+              <p className="text-sm text-muted">Choose light or dark colors, or follow your device setting.</p>
+            </div>
+            <div className="settings-row">
+              <div className="settings-label">
+                <span>Color theme</span>
+                <span>Your preference is saved on this device.</span>
+              </div>
+              <select
+                className="input"
+                aria-label="Color theme"
+                style={{ width: '240px', fontWeight: 600 }}
+                value={themePreference}
+                onChange={(event) => {
+                  if (isThemePreference(event.target.value)) setThemePreference(event.target.value);
+                }}
+              >
+                <option value="system">System</option>
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+              </select>
+            </div>
+          </div>
+
           {savedSuccess && (
             <div className="card" style={{ background: '#ecfdf5', borderLeft: '4px solid var(--color-success)', padding: '12px 16px' }}>
               <span style={{ color: 'var(--color-success)', fontWeight: 600 }}>✓ Preferences Saved — Default language set to {SUPPORTED_LANGUAGES.find(l => l.code === language)?.label || language}</span>

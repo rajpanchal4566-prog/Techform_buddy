@@ -8,7 +8,6 @@ import PwaInstallPrompt from "@/components/PwaInstallPrompt";
 import MobileBottomNav from "@/components/MobileBottomNav";
 
 export const viewport: Viewport = {
-  themeColor: "#0f172a",
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
@@ -47,6 +46,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){var p="system";try{var s=localStorage.getItem("tfb_theme");if(s==="light"||s==="dark"||s==="system")p=s}catch(e){console.warn("Unable to read saved theme preference.",e)}var d=p==="dark"||(p==="system"&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.dataset.theme=d?"dark":"light"})()`,
+          }}
+        />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
@@ -63,4 +67,3 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
-

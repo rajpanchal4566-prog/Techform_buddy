@@ -211,6 +211,68 @@ p {
   color: var(--color-text-tertiary);
 }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.theme-control {
+  display: inline-flex;
+  align-items: center;
+}
+
+.theme-select {
+  min-height: 38px;
+  padding: 6px 32px 6px 10px;
+  border: 1px solid var(--tfb-border);
+  border-radius: var(--tfb-radius-md);
+  color: var(--tfb-text);
+  background: var(--tfb-surface);
+  font: inherit;
+  font-size: var(--font-size-sm);
+}
+
+.theme-select:focus-visible,
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 3px solid var(--tfb-focus-ring);
+  outline-offset: 2px;
+}
+
+::selection {
+  color: var(--tfb-primary-contrast);
+  background: var(--tfb-primary);
+}
+
+html {
+  scrollbar-color: var(--tfb-primary) var(--tfb-surface-2);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--tfb-surface-2);
+}
+
+::-webkit-scrollbar-thumb {
+  border: 2px solid var(--tfb-surface-2);
+  border-radius: var(--tfb-radius-full);
+  background: var(--tfb-primary);
+}
+
 /* --- Buttons --- */
 .btn {
   display: inline-flex;

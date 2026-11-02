@@ -4,6 +4,7 @@ import React, { useEffect, useMemo } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, usePathname } from 'next/navigation';
 import Sidebar, { MobileMenuButton } from '@/components/Sidebar';
+import ThemeSelector from '@/components/ThemeSelector';
 import {
   AppShellProvider,
   HeaderActionsSlot,
@@ -113,6 +114,7 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
             <AppShellHeaderTitle defaultTitle={defaultMeta.title} defaultSubtitle={defaultMeta.subtitle} />
           </div>
           {/* Isolated slot for page action buttons / portals */}
+          <ThemeSelector />
           <HeaderActionsSlot />
         </header>
 
