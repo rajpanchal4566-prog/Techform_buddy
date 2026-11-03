@@ -19,4 +19,20 @@ test('Capture Evidence Screenshots', async ({ page }) => {
   await page.click('#tab-nav-vault');
   await page.waitForTimeout(300);
   await page.screenshot({ path: 'C:/Users/ACER/.gemini/antigravity/brain/41d46163-53c9-4fe5-842a-281fed7651e6/evidence/popup-vault.png' });
+
+  // 4. Web App Landing Page
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await page.goto('http://localhost:3000');
+  await page.waitForTimeout(1000);
+  await page.screenshot({ path: 'C:/Users/ACER/.gemini/antigravity/brain/41d46163-53c9-4fe5-842a-281fed7651e6/evidence/landing-current.png' });
+
+  // 5. Web App Login Page
+  await page.goto('http://localhost:3000/login');
+  await page.waitForTimeout(1000);
+  await page.screenshot({ path: 'C:/Users/ACER/.gemini/antigravity/brain/41d46163-53c9-4fe5-842a-281fed7651e6/evidence/login-current.png' });
+
+  // 6. Web App Dashboard Page
+  await page.goto('http://localhost:3000/dashboard');
+  await page.waitForTimeout(1000);
+  await page.screenshot({ path: 'C:/Users/ACER/.gemini/antigravity/brain/41d46163-53c9-4fe5-842a-281fed7651e6/evidence/dashboard-current.png' });
 });
