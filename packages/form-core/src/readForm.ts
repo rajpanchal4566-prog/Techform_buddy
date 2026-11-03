@@ -475,12 +475,13 @@ export function readForm(root: Document | ShadowRoot | Element = document): Form
     const selector = generateSelector(el, doc);
     const section = extractSectionHeading(el, doc);
 
-    // Hard Rule 4: Flag sensitive fields
-    const sensitive = isSensitiveField(label, name, id);
-
-    // File inputs are always manual: true
     const isFile = normalizedType === 'file';
+    // Hard Rule 4: Flag sensitive fields (only text/number inputs asking for credentials/IDs, not file attachments)
+    const sensitive = !isFile && isSensitiveField(label, name, id);
     const manual = isFile || sensitive;
+
+    const accept = isFile ? (el.getAttribute('accept') || undefined) : undefined;
+    const canAttachDoc = isFile;
 
     // Handle options for Select elements
     let options: FieldOption[] | undefined;
@@ -545,6 +546,8 @@ export function readForm(root: Document | ShadowRoot | Element = document): Form
       max,
       manual,
       sensitive,
+      canAttachDoc,
+      accept,
     });
   }
 

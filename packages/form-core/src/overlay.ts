@@ -1121,7 +1121,12 @@ export class GuideOverlay {
   }
 
   public setLanguage(lang: string): void {
-    this.language = sanitizeLanguage(lang);
+    const clean = (lang || '').trim().toLowerCase().split(/[-_]/)[0];
+    if (OVERLAY_TRANSLATIONS[clean]) {
+      this.language = clean;
+    } else {
+      this.language = sanitizeLanguage(lang);
+    }
     this.render();
   }
 

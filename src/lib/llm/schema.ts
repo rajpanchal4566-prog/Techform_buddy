@@ -26,6 +26,22 @@ export const SERVER_ALLOWED_PROFILE_KEYS = [
   'emergency_contact',
   'marital_status',
   'occupation',
+  // Education fields
+  'college',
+  'university',
+  'course',
+  'degree',
+  'branch',
+  'specialization',
+  'year',
+  'semester',
+  'roll_number',
+  'enrollment_number',
+  'cgpa',
+  'percentage',
+  // Additional details
+  'category',
+  'caste_category',
 ] as const;
 
 export type ServerAllowedProfileKey = (typeof SERVER_ALLOWED_PROFILE_KEYS)[number];

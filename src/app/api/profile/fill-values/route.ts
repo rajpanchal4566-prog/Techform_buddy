@@ -102,7 +102,8 @@ export async function GET(request: NextRequest) {
       try {
         const custom = JSON.parse(profile.custom_fields);
         for (const [k, v] of Object.entries(custom)) {
-          if (allowedSet.has(k) && typeof v === 'string' && v && !fillValues[k]) {
+          const isBlocked = /password|pin|secret|otp|mpin|aadhaar|aadhar|uidai|pan|passport|voter|epic|bank|card|cvv/i.test(k);
+          if (!isBlocked && typeof v === 'string' && v && !fillValues[k]) {
             fillValues[k] = v;
           }
         }

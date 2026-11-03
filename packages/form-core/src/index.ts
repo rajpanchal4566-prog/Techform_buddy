@@ -15,7 +15,7 @@ import {
   isNavigationOrHeaderFooterControl,
   isRealForm,
 } from './readForm';
-import { applyFill, clearHighlights, normalizeDateValue } from './applyFill';
+import { applyFill, dontFill, clearHighlights, normalizeDateValue, createFileFromVaultDoc } from './applyFill';
 import { FormChangeObserver, unpatchHistory } from './observer';
 import { createBridge, ChromeExtensionBridge, AndroidInAppBrowserBridge, MockBridge } from './bridge';
 import { analyzeField, analyzeForm, generateSafeMapping, detectSensitiveField } from './analyzer';

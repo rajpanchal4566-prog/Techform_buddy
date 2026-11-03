@@ -25,6 +25,57 @@ export interface FieldOption {
   value: string;
 }
 
+export type DocumentType =
+  | 'aadhaar'
+  | 'pan'
+  | 'photo'
+  | 'signature'
+  | 'marksheet'
+  | 'certificate'
+  | 'resume'
+  | 'other';
+
+export interface VaultDocument {
+  id: string;
+  name: string;
+  docType: DocumentType;
+  fileType: string;
+  fileSize: number;
+  dataUrl?: string;
+  lastUpdated?: number;
+}
+
+export interface ExtensionUserProfile {
+  personal: {
+    fullName: string;
+    dob: string;
+    gender: string;
+    email: string;
+    phone: string;
+    address: string;
+    state: string;
+    city: string;
+    pincode: string;
+  };
+  education: {
+    college: string;
+    university: string;
+    course: string;
+    branch: string;
+    year: string;
+    semester: string;
+    rollNumber: string;
+    enrollmentNumber: string;
+    cgpa?: string;
+  };
+  additional: {
+    fatherName: string;
+    motherName: string;
+    category: string;
+    customFields: Record<string, string>;
+  };
+}
+
 export interface FormFieldSchema {
   /** Unique identifier within scanned document (generated or from element id/name) */
   id: string;
@@ -49,17 +100,23 @@ export interface FormFieldSchema {
   /** Maximum value or date if specified */
   max?: string | number;
   /**
-   * Always true for file inputs, captchas, or sensitive fields.
+   * Always true for sensitive fields (passwords, OTPs, Aadhaar/PAN text numbers).
    * Tells overlay and autofill engine: "Please fill/type this yourself".
    */
   manual: boolean;
   /**
    * True for Aadhaar, PAN, Passport, Credit Card, Bank Account numbers.
-   * Enforces Hard Rule 4: Never store or autofill from storage.
+   * Enforces Hard Rule 4: Never store or autofill text credentials from storage.
    */
   sensitive: boolean;
   /** Name of the radio group if this is a radio field */
   groupName?: string;
+  /** Document type if this is a file upload input */
+  matchedDocType?: DocumentType;
+  /** Whether document can be attached */
+  canAttachDoc?: boolean;
+  /** Accepted file formats if specified on input */
+  accept?: string;
 }
 
 export interface FormSchema {
@@ -85,13 +142,21 @@ export interface PageGuideData {
   aiAdvice?: string;
 }
 
-export type FillStatus = 'filled' | 'skipped' | 'manual';
+export type FillStatus =
+  | 'filled'
+  | 'skipped'
+  | 'manual'
+  | 'document_attached'
+  | 'document_ready'
+  | 'unverified';
 
 export interface FieldFillResult {
   fieldId: string;
   selector: string;
   status: FillStatus;
   valueApplied?: string;
+  docName?: string;
+  verified?: boolean;
   reason?: string;
 }
 
@@ -101,6 +166,8 @@ export interface FillSummary {
   filledCount: number;
   skippedCount: number;
   manualCount: number;
+  documentCount?: number;
+  unverifiedCount?: number;
 }
 
 /**

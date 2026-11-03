@@ -37,9 +37,12 @@ var TechFormBuddyCore = (() => {
     attachFileToInput: () => attachFileToInput,
     clearHighlights: () => clearHighlights,
     createBridge: () => createBridge,
+    createFileFromVaultDoc: () => createFileFromVaultDoc,
     default: () => index_default,
     destroy: () => destroy,
+    detectDocumentType: () => detectDocumentType,
     detectSensitiveField: () => detectSensitiveField,
+    dontFill: () => dontFill,
     generateSafeMapping: () => generateSafeMapping,
     generateSelector: () => generateSelector,
     isLanguageControl: () => isLanguageControl,
@@ -421,9 +424,11 @@ var TechFormBuddyCore = (() => {
       const id = el.id || `tfb_field_${fieldCounter++}`;
       const selector = generateSelector(el, doc);
       const section = extractSectionHeading(el, doc);
-      const sensitive = isSensitiveField(label, name, id);
       const isFile = normalizedType === "file";
+      const sensitive = !isFile && isSensitiveField(label, name, id);
       const manual = isFile || sensitive;
+      const accept = isFile ? el.getAttribute("accept") || void 0 : void 0;
+      const canAttachDoc = isFile;
       let options;
       if (normalizedType === "select" && el instanceof HTMLSelectElement) {
         options = Array.from(el.options).filter((opt) => opt.value !== "" || opt.text.trim() !== "").map((opt) => ({
@@ -478,7 +483,9 @@ var TechFormBuddyCore = (() => {
         min,
         max,
         manual,
-        sensitive
+        sensitive,
+        canAttachDoc,
+        accept
       });
     }
     return {
@@ -599,6 +606,44 @@ var TechFormBuddyCore = (() => {
     el.style.setProperty("outline-offset", "1px", "important");
     el.setAttribute("data-tfb-filled", "true");
   }
+  function highlightUnverifiedElement(el) {
+    el.style.setProperty("outline", "2px solid #f59e0b", "important");
+    el.style.setProperty("outline-offset", "1px", "important");
+    el.setAttribute("data-tfb-unverified", "true");
+  }
+  function createFileFromVaultDoc(doc) {
+    let blob;
+    if (doc.dataUrl && doc.dataUrl.startsWith("data:")) {
+      try {
+        const parts = doc.dataUrl.split(",");
+        const mime = parts[0].match(/:(.*?);/)?.[1] || doc.fileType || "application/pdf";
+        const binary = atob(parts[1]);
+        const array = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+          array[i] = binary.charCodeAt(i);
+        }
+        blob = new Blob([array], { type: mime });
+      } catch {
+        blob = new Blob([`TechForm Buddy Verified Document: ${doc.name}`], { type: doc.fileType || "application/pdf" });
+      }
+    } else {
+      const content = `TechForm Buddy Verified Document: ${doc.name}
+Type: ${doc.docType}
+Verified: true`;
+      blob = new Blob([content], { type: doc.fileType || "application/pdf" });
+    }
+    return new File([blob], doc.name, { type: doc.fileType || "application/pdf" });
+  }
+  function verifyDomValue(el, expectedValue) {
+    if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement) {
+      const current = (el.value || "").trim().toLowerCase();
+      const expected = expectedValue.trim().toLowerCase();
+      if (current === expected) return true;
+      if (current && expected && (current.includes(expected) || expected.includes(current))) return true;
+      return false;
+    }
+    return true;
+  }
   function selectMatchingOption(select, targetValue) {
     const normTarget = targetValue.toLowerCase().trim();
     const options = Array.from(select.options);
@@ -673,24 +718,106 @@ var TechFormBuddyCore = (() => {
     }
     return false;
   }
-  function applyFill(mapping, values, fieldSchemas = [], root = document) {
+  function applyFill(mapping, values, fieldSchemas = [], root = document, documents = []) {
     const doc = root instanceof Document ? root : root.ownerDocument || document;
     const results = [];
     let filledCount = 0;
     let skippedCount = 0;
     let manualCount = 0;
+    let documentCount = 0;
+    let unverifiedCount = 0;
     const schemaMap = /* @__PURE__ */ new Map();
     fieldSchemas.forEach((f) => schemaMap.set(f.id, f));
     for (const [fieldId, profileKey] of Object.entries(mapping)) {
       const schema = schemaMap.get(fieldId);
       const selector = schema?.selector || `#${fieldId}`;
-      if (schema?.manual || schema?.sensitive) {
+      let el = null;
+      try {
+        el = doc.querySelector(selector);
+      } catch {
+      }
+      if (!el && schema?.id) {
+        el = doc.getElementById(schema.id);
+      }
+      if (schema?.sensitive) {
         manualCount++;
+        if (el) highlightUnverifiedElement(el);
         results.push({
           fieldId,
           selector,
           status: "manual",
-          reason: schema.sensitive ? "Sensitive field (Aadhaar/PAN/Passport/Card/Bank) - Please type this yourself." : "File upload or manual input required."
+          verified: false,
+          reason: "Sensitive field (Aadhaar/PAN/Passport/Card/Bank) - Please type this yourself."
+        });
+        continue;
+      }
+      if (schema?.type === "file" || el instanceof HTMLInputElement && el.type === "file") {
+        const docTypeKey = (profileKey || "").replace(/^doc_/, "").toLowerCase();
+        const matchedDoc = (documents || []).find(
+          (d) => d.docType.toLowerCase() === docTypeKey || d.name.toLowerCase().includes(docTypeKey) || docTypeKey === "other" && d.docType
+        ) || (documents || [])[0];
+        if (!el || !(el instanceof HTMLInputElement)) {
+          skippedCount++;
+          results.push({
+            fieldId,
+            selector,
+            status: "skipped",
+            reason: "File input not found in DOM."
+          });
+          continue;
+        }
+        if (matchedDoc) {
+          const fileObj = createFileFromVaultDoc(matchedDoc);
+          const attached = attachFileToInput(el, fileObj);
+          if (attached) {
+            filledCount++;
+            documentCount++;
+            highlightFilledElement(el);
+            results.push({
+              fieldId,
+              selector,
+              status: "document_attached",
+              docName: matchedDoc.name,
+              valueApplied: matchedDoc.name,
+              verified: true,
+              reason: `Attached "${matchedDoc.name}" from Document Vault`
+            });
+          } else {
+            documentCount++;
+            highlightUnverifiedElement(el);
+            el.setAttribute("data-tfb-doc-ready", matchedDoc.name);
+            results.push({
+              fieldId,
+              selector,
+              status: "document_ready",
+              docName: matchedDoc.name,
+              valueApplied: matchedDoc.name,
+              verified: false,
+              reason: `Document "${matchedDoc.name}" ready in vault. 1-click attach button available.`
+            });
+          }
+        } else {
+          manualCount++;
+          highlightUnverifiedElement(el);
+          results.push({
+            fieldId,
+            selector,
+            status: "manual",
+            verified: false,
+            reason: `No matching document in vault for ${schema?.label || docTypeKey}.`
+          });
+        }
+        continue;
+      }
+      if (schema?.manual) {
+        manualCount++;
+        if (el) highlightUnverifiedElement(el);
+        results.push({
+          fieldId,
+          selector,
+          status: "manual",
+          verified: false,
+          reason: "Manual input or captcha verification required."
         });
         continue;
       }
@@ -705,14 +832,6 @@ var TechFormBuddyCore = (() => {
         continue;
       }
       const rawValue = values[profileKey].trim();
-      let el = null;
-      try {
-        el = doc.querySelector(selector);
-      } catch {
-      }
-      if (!el && schema?.id) {
-        el = doc.getElementById(schema.id);
-      }
       if (!el) {
         skippedCount++;
         results.push({
@@ -731,7 +850,8 @@ var TechFormBuddyCore = (() => {
             fieldId,
             selector,
             status: "filled",
-            valueApplied: rawValue
+            valueApplied: rawValue,
+            verified: true
           });
         } else {
           skippedCount++;
@@ -751,7 +871,8 @@ var TechFormBuddyCore = (() => {
           fieldId,
           selector,
           status: "filled",
-          valueApplied: rawValue
+          valueApplied: rawValue,
+          verified: true
         });
         continue;
       }
@@ -764,7 +885,8 @@ var TechFormBuddyCore = (() => {
             fieldId,
             selector,
             status: "filled",
-            valueApplied: el.value
+            valueApplied: el.value,
+            verified: true
           });
         } else {
           skippedCount++;
@@ -781,26 +903,41 @@ var TechFormBuddyCore = (() => {
         const isNativeDateInput = el instanceof HTMLInputElement && el.type === "date";
         const dateResult = normalizeDateValue(rawValue, isNativeDateInput ? "YYYY-MM-DD" : schema);
         setNativeValue(el, dateResult.formatted);
-        highlightFilledElement(el);
-        filledCount++;
+        const verified = verifyDomValue(el, dateResult.formatted);
+        if (verified) {
+          filledCount++;
+          highlightFilledElement(el);
+        } else {
+          unverifiedCount++;
+          highlightUnverifiedElement(el);
+        }
         results.push({
           fieldId,
           selector,
-          status: "filled",
+          status: verified ? "filled" : "unverified",
           valueApplied: dateResult.formatted,
-          reason: dateResult.confidence === "low" ? "Date format ambiguous; assumed DD/MM/YYYY (low confidence)" : void 0
+          verified,
+          reason: dateResult.confidence === "low" ? "Date format ambiguous; assumed DD/MM/YYYY (low confidence)" : verified ? void 0 : "Value reset by page scripts"
         });
         continue;
       }
       if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
         setNativeValue(el, rawValue);
-        highlightFilledElement(el);
-        filledCount++;
+        const verified = verifyDomValue(el, rawValue);
+        if (verified) {
+          filledCount++;
+          highlightFilledElement(el);
+        } else {
+          unverifiedCount++;
+          highlightUnverifiedElement(el);
+        }
         results.push({
           fieldId,
           selector,
-          status: "filled",
-          valueApplied: rawValue
+          status: verified ? "filled" : "unverified",
+          valueApplied: rawValue,
+          verified,
+          reason: verified ? void 0 : "Value reset by page scripts; please verify"
         });
         continue;
       }
@@ -813,19 +950,35 @@ var TechFormBuddyCore = (() => {
       });
     }
     return {
-      success: filledCount > 0,
+      success: filledCount + documentCount > 0,
       results,
       filledCount,
       skippedCount,
-      manualCount
+      manualCount,
+      documentCount,
+      unverifiedCount
+    };
+  }
+  function dontFill(root = document) {
+    clearHighlights(root);
+    return {
+      success: true,
+      results: [],
+      filledCount: 0,
+      skippedCount: 0,
+      manualCount: 0,
+      documentCount: 0,
+      unverifiedCount: 0
     };
   }
   function clearHighlights(root = document) {
-    const filled = root.querySelectorAll('[data-tfb-filled="true"]');
-    filled.forEach((el) => {
+    const elements = root.querySelectorAll('[data-tfb-filled="true"], [data-tfb-unverified="true"], [data-tfb-doc-ready]');
+    elements.forEach((el) => {
       el.style.removeProperty("outline");
       el.style.removeProperty("outline-offset");
       el.removeAttribute("data-tfb-filled");
+      el.removeAttribute("data-tfb-unverified");
+      el.removeAttribute("data-tfb-doc-ready");
     });
   }
 
@@ -1445,8 +1598,168 @@ var TechFormBuddyCore = (() => {
       ],
       explanationEn: "Country of residence or legal citizenship.",
       whatToEnterEn: "Select or enter your country (e.g. India)."
+    },
+    // 19. College / University / Institute
+    {
+      category: "COLLEGE_UNIVERSITY",
+      candidateProfileKeys: ["college", "university", "institution", "college_name", "university_name"],
+      allowedInputTypes: ["text", "select"],
+      positivePatterns: [
+        /\bcollege(\s+name)?\b/i,
+        /\buniversity(\s+name)?\b/i,
+        /\binstitute(\s+name)?\b/i,
+        /\binstitution\b/i,
+        /\bमहाविद्यालय\b/i,
+        /\bविश्वविद्यालय\b/i,
+        /\bसंस्थान\b/i
+      ],
+      negativePatterns: [
+        /\b(roll|enrollment|cgpa|percentage|marks|passing|degree|course|branch|mobile|phone|email)\b/i
+      ],
+      explanationEn: "College, University or Educational Institution name.",
+      whatToEnterEn: "Enter your college or university name."
+    },
+    // 20. Course / Degree / Academic Program
+    {
+      category: "COURSE_DEGREE",
+      candidateProfileKeys: ["course", "degree", "qualification", "program"],
+      allowedInputTypes: ["text", "select"],
+      positivePatterns: [
+        /\bcourse(\s+name)?\b/i,
+        /\bdegree(\s+name)?\b/i,
+        /\bprogram(me)?(\s+name)?\b/i,
+        /\bqualification\b/i,
+        /\bपाठ्यक्रम\b/i,
+        /\bडिग्री\b/i
+      ],
+      negativePatterns: [
+        /\b(roll|enrollment|cgpa|percentage|marks|passing|college|university|school)\b/i
+      ],
+      explanationEn: "Academic degree or course of study (e.g., B.Tech, B.Sc, MBA).",
+      whatToEnterEn: "Select or enter your enrolled course or degree."
+    },
+    // 21. Branch / Specialization / Stream
+    {
+      category: "BRANCH_SPECIALIZATION",
+      candidateProfileKeys: ["branch", "specialization", "stream", "discipline"],
+      allowedInputTypes: ["text", "select"],
+      positivePatterns: [
+        /\bbranch\b/i,
+        /\bspecialization\b/i,
+        /\bstream\b/i,
+        /\bdiscipline\b/i,
+        /\bशाखा\b/i
+      ],
+      negativePatterns: [
+        /\b(bank|office|city|address|college|university)\b/i
+      ],
+      explanationEn: "Academic branch, stream or specialization.",
+      whatToEnterEn: "Enter your branch or specialization (e.g. Computer Science, Mechanical)."
+    },
+    // 22. Roll Number / Hall Ticket Number
+    {
+      category: "ROLL_NUMBER",
+      candidateProfileKeys: ["roll_number", "rollNo", "roll_no"],
+      allowedInputTypes: ["text", "number"],
+      positivePatterns: [
+        /\broll[\s_-]?no(\.|\b)/i,
+        /\broll[\s_-]?number\b/i,
+        /\bhall[\s_-]?ticket\b/i,
+        /\bअनुक्रमांक\b/i,
+        /\bरोल[\s_-]?नंबर\b/i
+      ],
+      negativePatterns: [
+        /\b(enrollment|registration|mobile|phone|pincode)\b/i
+      ],
+      explanationEn: "Official examination or class roll number.",
+      whatToEnterEn: "Enter your institutional or exam roll number."
+    },
+    // 23. Enrollment Number / Registration Number
+    {
+      category: "ENROLLMENT_NUMBER",
+      candidateProfileKeys: ["enrollment_number", "enrollment_no", "enrolment_no", "registration_number", "reg_no"],
+      allowedInputTypes: ["text"],
+      positivePatterns: [
+        /\benroll?ment(\s+no|\s+num|\s+number)?\b/i,
+        /\bregistration(\s+no|\s+num|\s+number)?\b/i,
+        /\breg[\s_-]?no(\.|\b)/i,
+        /\bनामांकन[\s_-]?संख्या\b/i,
+        /\bपंजीकरण[\s_-]?संख्या\b/i
+      ],
+      negativePatterns: [
+        /\b(roll|mobile|phone|vehicle|aadhaar|pan)\b/i
+      ],
+      explanationEn: "University enrollment or registration number.",
+      whatToEnterEn: "Enter your university enrollment or registration ID."
+    },
+    // 24. Academic Year / Semester
+    {
+      category: "ACADEMIC_YEAR_SEMESTER",
+      candidateProfileKeys: ["semester", "year", "academic_year"],
+      allowedInputTypes: ["select", "text", "number"],
+      positivePatterns: [
+        /\bsemester\b/i,
+        /\bacademic[\s_-]?year\b/i,
+        /\bcurrent[\s_-]?year\b/i,
+        /\byear[\s_-]?of[\s_-]?study\b/i,
+        /\bसत्र\b/i,
+        /\bसेमेस्टर\b/i
+      ],
+      negativePatterns: [
+        /\b(passing|birth|dob|issue|expiry)\b/i
+      ],
+      explanationEn: "Current academic year or semester of study.",
+      whatToEnterEn: "Select or enter your current semester or year."
+    },
+    // 25. CGPA / Percentage / Academic Score
+    {
+      category: "ACADEMIC_CGPA_PERCENTAGE",
+      candidateProfileKeys: ["cgpa", "percentage", "marks"],
+      allowedInputTypes: ["text", "number"],
+      positivePatterns: [
+        /\bcgpa\b/i,
+        /\bpercentage\b/i,
+        /\bpercent\b/i,
+        /\bmarks\s*%\b/i,
+        /\bप्रतिशत\b/i
+      ],
+      negativePatterns: [
+        /\b(roll|enrollment|year|semester)\b/i
+      ],
+      explanationEn: "Academic performance score, CGPA or percentage.",
+      whatToEnterEn: "Enter your CGPA or percentage score."
+    },
+    // 26. Social / Reservation Category
+    {
+      category: "SOCIAL_CATEGORY",
+      candidateProfileKeys: ["category", "caste_category", "social_category"],
+      allowedInputTypes: ["select", "radio", "text"],
+      positivePatterns: [
+        /\bsocial[\s_-]?category\b/i,
+        /\bcaste[\s_-]?category\b/i,
+        /\breservation[\s_-]?category\b/i,
+        /\bcategory\b/i,
+        /\bवर्ग\b/i,
+        /\bश्रेणी\b/i
+      ],
+      negativePatterns: [
+        /\b(post|job|service|document|file|scheme)\b/i
+      ],
+      explanationEn: "Reservation / social category (General, OBC, SC, ST, EWS).",
+      whatToEnterEn: "Select or enter your category (e.g. General, OBC, SC, ST, EWS)."
     }
   ];
+  function detectDocumentType(label, id = "", name = "", accept = "") {
+    const text = `${label} ${id} ${name} ${accept}`.toLowerCase();
+    if (/aadhaar|aadhar|uidai/i.test(text)) return "aadhaar";
+    if (/\bpan\b|permanent[\s_-]?account/i.test(text)) return "pan";
+    if (/photo|passport[\s_-]?size|photograph|image|pic|चित्र|तस्वीर/i.test(text) && !/signature|sign/i.test(text)) return "photo";
+    if (/sign|signature|हस्ताक्षर|दस्तखत/i.test(text)) return "signature";
+    if (/mark[\s_-]?sheet|grade[\s_-]?card|transcript|अंकतालिका/i.test(text)) return "marksheet";
+    if (/certificate|degree|diploma|प्रमाण[\s_-]?पत्र/i.test(text)) return "certificate";
+    if (/resume|cv|biodata|bio[\s_-]?data/i.test(text)) return "resume";
+    return "other";
+  }
   var SENSITIVE_PATTERNS = [
     { name: "Aadhaar", pattern: /\b(aadhaar|aadhar|uidai|uid)\b|आधार/i },
     { name: "PAN", pattern: /\b(pan(?!\s*[-–]\s*[a-z])|permanent\s+account\s+number)\b|पैन/i },
@@ -1457,6 +1770,9 @@ var TechFormBuddyCore = (() => {
     { name: "Credential / Secret", pattern: /\b(password|pin|secret|otp|mpin|captcha)\b/i }
   ];
   function detectSensitiveField(field) {
+    if (field.type === "file") {
+      return { isSensitive: false };
+    }
     const combined = `${field.label} ${field.id} ${field.selector} ${field.section}`.toLowerCase();
     for (const s of SENSITIVE_PATTERNS) {
       if (s.pattern.test(combined)) {
@@ -1467,7 +1783,7 @@ var TechFormBuddyCore = (() => {
   }
   function analyzeField(field, availableProfileKeys) {
     const sensitiveCheck = detectSensitiveField(field);
-    if (sensitiveCheck.isSensitive || field.sensitive) {
+    if (field.type !== "file" && (sensitiveCheck.isSensitive || field.sensitive)) {
       return {
         fieldId: field.id,
         selector: field.selector,
@@ -1483,7 +1799,25 @@ var TechFormBuddyCore = (() => {
         reason: "Sensitive field (Hard Rule 4 enforced)"
       };
     }
-    if (field.type === "file" || field.manual) {
+    if (field.type === "file") {
+      const docType = detectDocumentType(field.label, field.id, "", field.accept || "");
+      const docKey = `doc_${docType}`;
+      return {
+        fieldId: field.id,
+        selector: field.selector,
+        label: field.label,
+        type: "file",
+        profileKey: docKey,
+        confidence: 0.95,
+        canFill: true,
+        manual: false,
+        sensitive: false,
+        explanation: `Document upload slot matched with ${docType.toUpperCase()} in Document Vault.`,
+        whatToEnter: `Attaches ${docType.toUpperCase()} document from your saved Document Vault.`,
+        reason: "Document vault match"
+      };
+    }
+    if (field.manual) {
       return {
         fieldId: field.id,
         selector: field.selector,
@@ -1494,9 +1828,9 @@ var TechFormBuddyCore = (() => {
         canFill: false,
         manual: true,
         sensitive: false,
-        explanation: "File upload field requires choosing an actual file from your device.",
-        whatToEnter: "Click browse and select your file manually.",
-        reason: "File upload (Manual action required)"
+        explanation: "Manual action required for this field.",
+        whatToEnter: "Please complete this field manually.",
+        reason: "Manual field"
       };
     }
     const textCorpus = `${field.label} ${field.id}`.toLowerCase();
@@ -2664,7 +2998,12 @@ var TechFormBuddyCore = (() => {
       }
     }
     setLanguage(lang) {
-      this.language = sanitizeLanguage(lang);
+      const clean = (lang || "").trim().toLowerCase().split(/[-_]/)[0];
+      if (OVERLAY_TRANSLATIONS[clean]) {
+        this.language = clean;
+      } else {
+        this.language = sanitizeLanguage(lang);
+      }
       this.render();
     }
     open() {

@@ -10,7 +10,7 @@
  * - Supports English and Indic multilingual synonyms (Hindi, etc.).
  */
 
-import { FormFieldSchema, FieldAnalysisResult, FormAnalysisSummary, FieldInputType } from './types';
+import { FormFieldSchema, FieldAnalysisResult, FormAnalysisSummary, FieldInputType, DocumentType } from './types';
 
 export interface SemanticRule {
   category: string;
@@ -357,7 +357,179 @@ export const SEMANTIC_TAXONOMY: SemanticRule[] = [
     explanationEn: 'Country of residence or legal citizenship.',
     whatToEnterEn: 'Select or enter your country (e.g. India).',
   },
+
+  // 19. College / University / Institute
+  {
+    category: 'COLLEGE_UNIVERSITY',
+    candidateProfileKeys: ['college', 'university', 'institution', 'college_name', 'university_name'],
+    allowedInputTypes: ['text', 'select'],
+    positivePatterns: [
+      /\bcollege(\s+name)?\b/i,
+      /\buniversity(\s+name)?\b/i,
+      /\binstitute(\s+name)?\b/i,
+      /\binstitution\b/i,
+      /\bमहाविद्यालय\b/i,
+      /\bविश्वविद्यालय\b/i,
+      /\bसंस्थान\b/i,
+    ],
+    negativePatterns: [
+      /\b(roll|enrollment|cgpa|percentage|marks|passing|degree|course|branch|mobile|phone|email)\b/i,
+    ],
+    explanationEn: "College, University or Educational Institution name.",
+    whatToEnterEn: "Enter your college or university name.",
+  },
+
+  // 20. Course / Degree / Academic Program
+  {
+    category: 'COURSE_DEGREE',
+    candidateProfileKeys: ['course', 'degree', 'qualification', 'program'],
+    allowedInputTypes: ['text', 'select'],
+    positivePatterns: [
+      /\bcourse(\s+name)?\b/i,
+      /\bdegree(\s+name)?\b/i,
+      /\bprogram(me)?(\s+name)?\b/i,
+      /\bqualification\b/i,
+      /\bपाठ्यक्रम\b/i,
+      /\bडिग्री\b/i,
+    ],
+    negativePatterns: [
+      /\b(roll|enrollment|cgpa|percentage|marks|passing|college|university|school)\b/i,
+    ],
+    explanationEn: "Academic degree or course of study (e.g., B.Tech, B.Sc, MBA).",
+    whatToEnterEn: "Select or enter your enrolled course or degree.",
+  },
+
+  // 21. Branch / Specialization / Stream
+  {
+    category: 'BRANCH_SPECIALIZATION',
+    candidateProfileKeys: ['branch', 'specialization', 'stream', 'discipline'],
+    allowedInputTypes: ['text', 'select'],
+    positivePatterns: [
+      /\bbranch\b/i,
+      /\bspecialization\b/i,
+      /\bstream\b/i,
+      /\bdiscipline\b/i,
+      /\bशाखा\b/i,
+    ],
+    negativePatterns: [
+      /\b(bank|office|city|address|college|university)\b/i,
+    ],
+    explanationEn: "Academic branch, stream or specialization.",
+    whatToEnterEn: "Enter your branch or specialization (e.g. Computer Science, Mechanical).",
+  },
+
+  // 22. Roll Number / Hall Ticket Number
+  {
+    category: 'ROLL_NUMBER',
+    candidateProfileKeys: ['roll_number', 'rollNo', 'roll_no'],
+    allowedInputTypes: ['text', 'number'],
+    positivePatterns: [
+      /\broll[\s_-]?no(\.|\b)/i,
+      /\broll[\s_-]?number\b/i,
+      /\bhall[\s_-]?ticket\b/i,
+      /\bअनुक्रमांक\b/i,
+      /\bरोल[\s_-]?नंबर\b/i,
+    ],
+    negativePatterns: [
+      /\b(enrollment|registration|mobile|phone|pincode)\b/i,
+    ],
+    explanationEn: "Official examination or class roll number.",
+    whatToEnterEn: "Enter your institutional or exam roll number.",
+  },
+
+  // 23. Enrollment Number / Registration Number
+  {
+    category: 'ENROLLMENT_NUMBER',
+    candidateProfileKeys: ['enrollment_number', 'enrollment_no', 'enrolment_no', 'registration_number', 'reg_no'],
+    allowedInputTypes: ['text'],
+    positivePatterns: [
+      /\benroll?ment(\s+no|\s+num|\s+number)?\b/i,
+      /\bregistration(\s+no|\s+num|\s+number)?\b/i,
+      /\breg[\s_-]?no(\.|\b)/i,
+      /\bनामांकन[\s_-]?संख्या\b/i,
+      /\bपंजीकरण[\s_-]?संख्या\b/i,
+    ],
+    negativePatterns: [
+      /\b(roll|mobile|phone|vehicle|aadhaar|pan)\b/i,
+    ],
+    explanationEn: "University enrollment or registration number.",
+    whatToEnterEn: "Enter your university enrollment or registration ID.",
+  },
+
+  // 24. Academic Year / Semester
+  {
+    category: 'ACADEMIC_YEAR_SEMESTER',
+    candidateProfileKeys: ['semester', 'year', 'academic_year'],
+    allowedInputTypes: ['select', 'text', 'number'],
+    positivePatterns: [
+      /\bsemester\b/i,
+      /\bacademic[\s_-]?year\b/i,
+      /\bcurrent[\s_-]?year\b/i,
+      /\byear[\s_-]?of[\s_-]?study\b/i,
+      /\bसत्र\b/i,
+      /\bसेमेस्टर\b/i,
+    ],
+    negativePatterns: [
+      /\b(passing|birth|dob|issue|expiry)\b/i,
+    ],
+    explanationEn: "Current academic year or semester of study.",
+    whatToEnterEn: "Select or enter your current semester or year.",
+  },
+
+  // 25. CGPA / Percentage / Academic Score
+  {
+    category: 'ACADEMIC_CGPA_PERCENTAGE',
+    candidateProfileKeys: ['cgpa', 'percentage', 'marks'],
+    allowedInputTypes: ['text', 'number'],
+    positivePatterns: [
+      /\bcgpa\b/i,
+      /\bpercentage\b/i,
+      /\bpercent\b/i,
+      /\bmarks\s*%\b/i,
+      /\bप्रतिशत\b/i,
+    ],
+    negativePatterns: [
+      /\b(roll|enrollment|year|semester)\b/i,
+    ],
+    explanationEn: "Academic performance score, CGPA or percentage.",
+    whatToEnterEn: "Enter your CGPA or percentage score.",
+  },
+
+  // 26. Social / Reservation Category
+  {
+    category: 'SOCIAL_CATEGORY',
+    candidateProfileKeys: ['category', 'caste_category', 'social_category'],
+    allowedInputTypes: ['select', 'radio', 'text'],
+    positivePatterns: [
+      /\bsocial[\s_-]?category\b/i,
+      /\bcaste[\s_-]?category\b/i,
+      /\breservation[\s_-]?category\b/i,
+      /\bcategory\b/i,
+      /\bवर्ग\b/i,
+      /\bश्रेणी\b/i,
+    ],
+    negativePatterns: [
+      /\b(post|job|service|document|file|scheme)\b/i,
+    ],
+    explanationEn: "Reservation / social category (General, OBC, SC, ST, EWS).",
+    whatToEnterEn: "Select or enter your category (e.g. General, OBC, SC, ST, EWS).",
+  },
 ];
+
+/**
+ * Detects the document type requested by a file upload field.
+ */
+export function detectDocumentType(label: string, id: string = '', name: string = '', accept: string = ''): DocumentType {
+  const text = `${label} ${id} ${name} ${accept}`.toLowerCase();
+  if (/aadhaar|aadhar|uidai/i.test(text)) return 'aadhaar';
+  if (/\bpan\b|permanent[\s_-]?account/i.test(text)) return 'pan';
+  if (/photo|passport[\s_-]?size|photograph|image|pic|चित्र|तस्वीर/i.test(text) && !/signature|sign/i.test(text)) return 'photo';
+  if (/sign|signature|हस्ताक्षर|दस्तखत/i.test(text)) return 'signature';
+  if (/mark[\s_-]?sheet|grade[\s_-]?card|transcript|अंकतालिका/i.test(text)) return 'marksheet';
+  if (/certificate|degree|diploma|प्रमाण[\s_-]?पत्र/i.test(text)) return 'certificate';
+  if (/resume|cv|biodata|bio[\s_-]?data/i.test(text)) return 'resume';
+  return 'other';
+}
 
 /**
  * Hard Rule 4 & 3: Sensitive identification/financial field patterns.
@@ -377,6 +549,11 @@ const SENSITIVE_PATTERNS: { name: string; pattern: RegExp }[] = [
  * Checks if a field asks for sensitive financial or ID credentials.
  */
 export function detectSensitiveField(field: FormFieldSchema): { isSensitive: boolean; kind?: string } {
+  // File uploads are document attachments, not sensitive text credential fields
+  if (field.type === 'file') {
+    return { isSensitive: false };
+  }
+
   const combined = `${field.label} ${field.id} ${field.selector} ${field.section}`.toLowerCase();
 
   for (const s of SENSITIVE_PATTERNS) {
@@ -396,9 +573,9 @@ export function analyzeField(
   field: FormFieldSchema,
   availableProfileKeys: string[]
 ): FieldAnalysisResult {
-  // 1. Hard Rule 4: Intercept Sensitive Fields
+  // 1. Hard Rule 4: Intercept Sensitive Credential Fields (excluding file inputs)
   const sensitiveCheck = detectSensitiveField(field);
-  if (sensitiveCheck.isSensitive || field.sensitive) {
+  if (field.type !== 'file' && (sensitiveCheck.isSensitive || field.sensitive)) {
     return {
       fieldId: field.id,
       selector: field.selector,
@@ -415,8 +592,29 @@ export function analyzeField(
     };
   }
 
-  // 2. File inputs are always manual
-  if (field.type === 'file' || field.manual) {
+  // 2. File inputs: match against Document Vault types
+  if (field.type === 'file') {
+    const docType = detectDocumentType(field.label, field.id, '', field.accept || '');
+    const docKey = `doc_${docType}`;
+
+    return {
+      fieldId: field.id,
+      selector: field.selector,
+      label: field.label,
+      type: 'file',
+      profileKey: docKey,
+      confidence: 0.95,
+      canFill: true,
+      manual: false,
+      sensitive: false,
+      explanation: `Document upload slot matched with ${docType.toUpperCase()} in Document Vault.`,
+      whatToEnter: `Attaches ${docType.toUpperCase()} document from your saved Document Vault.`,
+      reason: 'Document vault match',
+    };
+  }
+
+  // 3. Non-file manual fields (e.g. captchas, custom manual inputs)
+  if (field.manual) {
     return {
       fieldId: field.id,
       selector: field.selector,
@@ -427,9 +625,9 @@ export function analyzeField(
       canFill: false,
       manual: true,
       sensitive: false,
-      explanation: 'File upload field requires choosing an actual file from your device.',
-      whatToEnter: 'Click browse and select your file manually.',
-      reason: 'File upload (Manual action required)',
+      explanation: 'Manual action required for this field.',
+      whatToEnter: 'Please complete this field manually.',
+      reason: 'Manual field',
     };
   }
 
