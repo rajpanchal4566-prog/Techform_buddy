@@ -189,6 +189,122 @@ export default function FormWatchPage() {
   // Client query flag to prevent SSR hydration mismatch (Requirement 1)
   const [isDevQuery, setIsDevQuery] = useState(false);
 
+  // Ecosystem Main View Tab ('watches' | 'events' | 'saved')
+  const [activeMainTab, setActiveMainTab] = useState<'watches' | 'events' | 'saved'>('watches');
+
+  // Events & Opportunities Hub state
+  const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
+  const [eventsLoading, setEventsLoading] = useState(false);
+  const [selectedEventModal, setSelectedEventModal] = useState<any | null>(null);
+  const [eventCategoryFilter, setEventCategoryFilter] = useState('all');
+  const [eventModeFilter, setEventModeFilter] = useState('all');
+  const [eventSearchQuery, setEventSearchQuery] = useState('');
+
+  // Saved / Bookmarked Events & Reminders state
+  const [savedEvents, setSavedEvents] = useState<any[]>([]);
+  const [savedEventsLoading, setSavedEventsLoading] = useState(false);
+  const [bookmarkToast, setBookmarkToast] = useState<string | null>(null);
+
+  const fetchEvents = useCallback(async () => {
+    setEventsLoading(true);
+    try {
+      const res = await fetch('/api/form-watches/events');
+      if (res.ok) {
+        const data = await res.json();
+        setUpcomingEvents(data.events || []);
+      }
+    } catch (err) {
+      console.error('Failed to load events:', err);
+    } finally {
+      setEventsLoading(false);
+    }
+  }, []);
+
+  const fetchSavedEvents = useCallback(async () => {
+    setSavedEventsLoading(true);
+    try {
+      const res = await fetch('/api/form-watches/bookmarks');
+      if (res.ok) {
+        const data = await res.json();
+        setSavedEvents(data.savedEvents || []);
+      }
+    } catch (err) {
+      console.error('Failed to load saved events:', err);
+    } finally {
+      setSavedEventsLoading(false);
+    }
+  }, []);
+
+  const handleToggleBookmark = async (event: any) => {
+    const isCurrentlySaved = savedEvents.some(s => s.id === event.id || s.title === event.title);
+    try {
+      if (isCurrentlySaved) {
+        const res = await fetch('/api/form-watches/bookmarks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'remove', id: event.id, title: event.title }),
+        });
+        if (res.ok) {
+          setBookmarkToast(`Removed "${event.title}" from saved events`);
+          fetchSavedEvents();
+          fetchEvents();
+        }
+      } else {
+        const res = await fetch('/api/form-watches/bookmarks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'save',
+            id: event.id,
+            eventId: event.id,
+            title: event.title,
+            category: event.category || 'hackathon',
+            eventType: event.eventType || 'event',
+            sourceName: event.sourceName,
+            sourceUrl: event.sourceUrl,
+            eventDate: event.eventDate,
+            deadlineDate: event.deadlineDate,
+            locationMode: event.locationMode,
+            registrationUrl: event.registrationUrl,
+            reminderSet: 1,
+          }),
+        });
+        if (res.ok) {
+          setBookmarkToast(`✓ Bookmarked "${event.title}"!`);
+          fetchSavedEvents();
+          fetchEvents();
+        }
+      }
+      setTimeout(() => setBookmarkToast(null), 3500);
+    } catch (err) {
+      console.error('Failed to toggle bookmark:', err);
+    }
+  };
+
+  const handleToggleReminder = async (savedEventId: string, currentReminderState: boolean) => {
+    try {
+      const nextState = !currentReminderState;
+      const res = await fetch('/api/form-watches/bookmarks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'toggle_reminder',
+          id: savedEventId,
+          reminderSet: nextState,
+        }),
+      });
+      if (res.ok) {
+        setSavedEvents(prev =>
+          prev.map(s => (s.id === savedEventId ? { ...s, reminder_set: nextState ? 1 : 0 } : s))
+        );
+        setBookmarkToast(nextState ? '🔔 Deadline reminder enabled (7d and 1d alerts)' : '🔕 Reminder disabled');
+        setTimeout(() => setBookmarkToast(null), 3000);
+      }
+    } catch (err) {
+      console.error('Failed to toggle reminder:', err);
+    }
+  };
+
   useEffect(() => {
     if (typeof window !== 'undefined' && window.location.search.includes('dev=true')) {
       setIsDevQuery(true);
@@ -210,12 +326,14 @@ export default function FormWatchPage() {
         const data = await sourceRes.json();
         setSources(data.sources || []);
       }
+      fetchEvents();
+      fetchSavedEvents();
     } catch (err) {
       console.error('Failed to fetch form watch data:', err);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [fetchEvents, fetchSavedEvents]);
 
   // Register Form Watch actions with Action Registry (Requirement 1)
   useRegisterActions([
@@ -758,6 +876,75 @@ export default function FormWatchPage() {
             </div>
           )}
 
+          {/* Bookmark feedback toast */}
+          {bookmarkToast && (
+            <div id="fw-bookmark-toast" className="fw-toast-banner" style={{ marginBottom: '14px' }}>
+              <span>{bookmarkToast}</span>
+              <button
+                type="button"
+                onClick={() => setBookmarkToast(null)}
+                style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', fontSize: '14px' }}
+              >
+                ✕
+              </button>
+            </div>
+          )}
+
+          {/* Form Watch Ecosystem View Switcher */}
+          <div className="fw-ecosystem-nav">
+            <button
+              id="fw-view-watches"
+              type="button"
+              className={`btn ${activeMainTab === 'watches' ? 'btn-primary' : 'btn-secondary'}`}
+              onClick={() => setActiveMainTab('watches')}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700 }}
+            >
+              <span>📡</span>
+              <span>All Portals &amp; Watches</span>
+              <span className="badge" style={{ background: activeMainTab === 'watches' ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.08)', padding: '2px 8px', borderRadius: '10px', fontSize: '11px' }}>
+                {watches.length}
+              </span>
+            </button>
+
+            <button
+              id="fw-view-events"
+              type="button"
+              className={`btn ${activeMainTab === 'events' ? 'btn-primary' : 'btn-secondary'}`}
+              onClick={() => {
+                setActiveMainTab('events');
+                fetchEvents();
+              }}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700 }}
+            >
+              <span>🏆</span>
+              <span>Events &amp; Opportunities Hub</span>
+              {upcomingEvents.length > 0 && (
+                <span className="badge" style={{ background: activeMainTab === 'events' ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.08)', padding: '2px 8px', borderRadius: '10px', fontSize: '11px' }}>
+                  {upcomingEvents.length}
+                </span>
+              )}
+            </button>
+
+            <button
+              id="fw-view-saved"
+              type="button"
+              className={`btn ${activeMainTab === 'saved' ? 'btn-primary' : 'btn-secondary'}`}
+              onClick={() => {
+                setActiveMainTab('saved');
+                fetchSavedEvents();
+              }}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700 }}
+            >
+              <span>🔖</span>
+              <span>Saved Events &amp; Reminders</span>
+              <span className="badge" style={{ background: activeMainTab === 'saved' ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.08)', padding: '2px 8px', borderRadius: '10px', fontSize: '11px' }}>
+                {savedEvents.length}
+              </span>
+            </button>
+          </div>
+
+          {activeMainTab === 'watches' && (
+            <>
           {/* ── Create Watch & Narrowing Flow ── */}
           <section className="fw-create-section card">
             <h3 style={{ fontSize: '16px', fontWeight: 700, margin: 0 }}>Create a New Form Watch</h3>
@@ -1752,7 +1939,415 @@ export default function FormWatchPage() {
               })}
             </div>
           </section>
+          </>
+          )}
+
+          {activeMainTab === 'events' && (
+            <div id="fw-events-hub-section" className="animate-fadeIn" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-lg)' }}>
+              {/* Header and Search */}
+              <div className="card" style={{ padding: '20px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--color-text-primary)' }}>
+                      🏆 Verified Events, Hackathons &amp; Opportunities
+                    </h3>
+                    <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--color-text-secondary)' }}>
+                      Discover nationwide hackathons, robotics challenges, virtual internships, and college tech fests with live deadlines.
+                    </p>
+                  </div>
+                  <button
+                    className="btn btn-secondary btn-sm"
+                    onClick={fetchEvents}
+                    disabled={eventsLoading}
+                  >
+                    {eventsLoading ? 'Refreshing…' : '🔄 Refresh Feeds'}
+                  </button>
+                </div>
+
+                {/* Filters Row */}
+                <div className="fw-event-filters-bar">
+                  <div style={{ flex: 1, minWidth: '220px' }}>
+                    <input
+                      id="fw-events-search-input"
+                      type="text"
+                      className="input"
+                      placeholder="Search hackathons, AICTE, internships, IEEE…"
+                      value={eventSearchQuery}
+                      onChange={e => setEventSearchQuery(e.target.value)}
+                    />
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                    <select
+                      id="fw-event-category-select"
+                      className="input"
+                      style={{ width: 'auto', padding: '6px 10px', fontSize: '13px' }}
+                      value={eventCategoryFilter}
+                      onChange={e => setEventCategoryFilter(e.target.value)}
+                    >
+                      <option value="all">All Categories</option>
+                      <option value="hackathon">Hackathons &amp; Competitions</option>
+                      <option value="opportunity">Internships &amp; Job Fairs</option>
+                      <option value="form">Scholarships &amp; Admissions</option>
+                    </select>
+
+                    <select
+                      id="fw-event-mode-select"
+                      className="input"
+                      style={{ width: 'auto', padding: '6px 10px', fontSize: '13px' }}
+                      value={eventModeFilter}
+                      onChange={e => setEventModeFilter(e.target.value)}
+                    >
+                      <option value="all">All Modes</option>
+                      <option value="online">Online / Virtual</option>
+                      <option value="offline">Offline / In-Person</option>
+                      <option value="hybrid">Hybrid</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Category quick chips */}
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '10px' }}>
+                  {[
+                    { id: 'all', label: 'All Items' },
+                    { id: 'hackathon', label: '💻 Hackathons' },
+                    { id: 'competition', label: '🤖 Tech Fests & Robotics' },
+                    { id: 'internship', label: '💼 Internships' },
+                    { id: 'job_fair', label: '🏛️ Job Fairs' },
+                    { id: 'scholarship', label: '🎓 Scholarships' },
+                  ].map(chip => (
+                    <button
+                      key={chip.id}
+                      type="button"
+                      className={`fw-chip ${eventCategoryFilter === chip.id ? 'fw-chip-selected' : ''}`}
+                      onClick={() => setEventCategoryFilter(chip.id)}
+                    >
+                      {chip.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Events Grid */}
+              {eventsLoading ? (
+                <div style={{ padding: '36px', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+                  <div className="loading-spinner" style={{ margin: '0 auto 12px' }} />
+                  Loading verified opportunities and event schedules…
+                </div>
+              ) : upcomingEvents.length > 0 ? (
+                <div id="fw-events-grid" className="fw-event-grid">
+                  {upcomingEvents
+                    .filter(ev => {
+                      if (eventCategoryFilter !== 'all' && ev.category !== eventCategoryFilter) {
+                        if (eventCategoryFilter === 'hackathon' && !['hackathon', 'competition', 'tech_fest'].includes(ev.category)) return false;
+                        if (eventCategoryFilter === 'opportunity' && !['internship', 'job_fair', 'workshop', 'conference'].includes(ev.category)) return false;
+                        if (eventCategoryFilter === 'form' && !['scholarship', 'admission', 'exam', 'scheme'].includes(ev.category)) return false;
+                        if (!['hackathon', 'opportunity', 'form'].includes(eventCategoryFilter)) return false;
+                      }
+                      if (eventModeFilter !== 'all' && ev.locationMode !== eventModeFilter) return false;
+                      if (eventSearchQuery.trim()) {
+                        const q = eventSearchQuery.toLowerCase();
+                        const match =
+                          ev.title.toLowerCase().includes(q) ||
+                          ev.sourceName.toLowerCase().includes(q) ||
+                          ev.description.toLowerCase().includes(q);
+                        if (!match) return false;
+                      }
+                      return true;
+                    })
+                    .map(ev => {
+                      const isSaved = savedEvents.some(s => s.id === ev.id || s.title === ev.title);
+                      return (
+                        <div key={ev.id} className="fw-event-card">
+                          <div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                              <span className={`fw-event-badge fw-badge-${ev.category}`}>
+                                {ev.category.replace('_', ' ')}
+                              </span>
+                              <span style={{ fontSize: '11px', color: 'var(--color-text-tertiary)', textTransform: 'capitalize' }}>
+                                🌐 {ev.locationMode}
+                              </span>
+                            </div>
+
+                            <h4 className="fw-event-title" style={{ margin: '0 0 6px', fontSize: '15px', fontWeight: 700, lineHeight: 1.35, color: 'var(--color-text-primary)' }}>
+                              {ev.title}
+                            </h4>
+
+                            <div className="fw-event-source" style={{ fontSize: '12px', color: 'var(--color-text-secondary)', marginBottom: '8px' }}>
+                              🏛️ {ev.sourceName}
+                            </div>
+
+                            <p style={{ margin: '0 0 10px', fontSize: '12px', color: 'var(--color-text-tertiary)', lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                              {ev.description}
+                            </p>
+                          </div>
+
+                          <div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '6px', marginBottom: '10px' }}>
+                              {ev.deadlineDate ? (
+                                <span className="fw-event-deadline-chip">
+                                  ⏳ Deadline: {ev.deadlineDate}
+                                  {ev.daysRemaining !== null && ev.daysRemaining >= 0 && (
+                                    <span>({ev.daysRemaining}d left)</span>
+                                  )}
+                                </span>
+                              ) : (
+                                <span style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>
+                                  📅 Schedule: {ev.eventDate}
+                                </span>
+                              )}
+                              <span style={{ fontSize: '11px', padding: '1px 6px', borderRadius: '4px', background: 'var(--color-bg-secondary)', color: 'var(--color-text-secondary)' }}>
+                                👥 {ev.eligibility === 'students' ? 'Students Only' : 'Open to All'}
+                              </span>
+                            </div>
+
+                            <div className="fw-event-actions">
+                              <button
+                                className="btn btn-secondary btn-sm fw-btn-view-details"
+                                onClick={() => setSelectedEventModal(ev)}
+                                style={{ fontSize: '12px', padding: '4px 10px' }}
+                              >
+                                👁️ Details
+                              </button>
+
+                              <button
+                                className={`btn btn-sm fw-btn-bookmark ${isSaved ? 'btn-primary' : 'btn-ghost'}`}
+                                onClick={() => handleToggleBookmark(ev)}
+                                style={{ fontSize: '12px', padding: '4px 10px' }}
+                                title={isSaved ? 'Remove from saved' : 'Save / Bookmark event'}
+                              >
+                                {isSaved ? '✓ Bookmarked' : '🔖 Bookmark'}
+                              </button>
+
+                              {ev.registrationUrl && (
+                                <a
+                                  href={ev.registrationUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="btn btn-ghost btn-sm fw-btn-official-link"
+                                  style={{ fontSize: '12px', padding: '4px 10px', marginLeft: 'auto' }}
+                                >
+                                  Official Site ↗
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              ) : (
+                <div className="empty-state">
+                  <p className="text-muted">No upcoming events matching your filter.</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeMainTab === 'saved' && (
+            <div id="fw-saved-events-section" className="animate-fadeIn" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-lg)' }}>
+              <div className="card" style={{ padding: '20px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--color-text-primary)' }}>
+                      🔖 Bookmarked Events &amp; Deadline Reminders
+                    </h3>
+                    <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--color-text-secondary)' }}>
+                      All events and applications you have saved with automated 7-day and 1-day notification alerts.
+                    </p>
+                  </div>
+                  <button
+                    className="btn btn-secondary btn-sm"
+                    onClick={fetchSavedEvents}
+                    disabled={savedEventsLoading}
+                  >
+                    {savedEventsLoading ? 'Loading…' : '🔄 Refresh Bookmarks'}
+                  </button>
+                </div>
+              </div>
+
+              {savedEventsLoading ? (
+                <div style={{ padding: '36px', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+                  <div className="loading-spinner" style={{ margin: '0 auto 12px' }} />
+                  Loading your bookmarked events…
+                </div>
+              ) : savedEvents.length > 0 ? (
+                <div id="fw-saved-events-list" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {savedEvents.map(se => (
+                    <div key={se.id} className="card" style={{ padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px' }}>
+                      <div style={{ flex: 1, minWidth: '260px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                          <span className={`fw-event-badge fw-badge-${se.category}`}>
+                            {se.category}
+                          </span>
+                          <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
+                            🏛️ {se.source_name || 'Official Portal'}
+                          </span>
+                        </div>
+
+                        <h4 style={{ margin: '0 0 6px', fontSize: '16px', fontWeight: 700, color: 'var(--color-text-primary)' }}>
+                          {se.title}
+                        </h4>
+
+                        <div style={{ display: 'flex', gap: '14px', alignItems: 'center', flexWrap: 'wrap', fontSize: '12px', color: 'var(--color-text-tertiary)' }}>
+                          {se.deadline_date && (
+                            <span className="fw-event-deadline-chip">
+                              ⏳ Deadline: {se.deadline_date}
+                            </span>
+                          )}
+                          {se.event_date && (
+                            <span>📅 Schedule: {se.event_date}</span>
+                          )}
+                          <span>🌐 Mode: {se.location_mode || 'online'}</span>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                        <button
+                          className={`btn btn-sm fw-btn-toggle-reminder ${se.reminder_set ? 'btn-primary' : 'btn-secondary'}`}
+                          onClick={() => handleToggleReminder(se.id, Boolean(se.reminder_set))}
+                          style={{ fontSize: '12px', padding: '4px 10px' }}
+                          title="Toggle deadline alerts"
+                        >
+                          {se.reminder_set ? '🔔 Reminder Active' : '🔕 Set Reminder'}
+                        </button>
+
+                        {se.registration_url && (
+                          <a
+                            href={se.registration_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn btn-ghost btn-sm"
+                            style={{ fontSize: '12px', padding: '4px 10px' }}
+                          >
+                            Site ↗
+                          </a>
+                        )}
+
+                        <button
+                          className="btn btn-ghost btn-sm fw-btn-remove-bookmark"
+                          onClick={() => handleToggleBookmark(se)}
+                          style={{ fontSize: '12px', padding: '4px 10px', color: '#dc2626' }}
+                          title="Remove bookmark"
+                        >
+                          ✕ Remove
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="empty-state">
+                  <p className="text-muted" style={{ fontWeight: 600 }}>No Bookmarked Events Yet</p>
+                  <p className="text-xs text-muted">
+                    Click &ldquo;Events &amp; Opportunities Hub&rdquo; above to discover and bookmark upcoming hackathons, tech fests, internships, and scholarships.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
+
+        {/* ── Event Details Modal (Requirement 5.3) ── */}
+        {selectedEventModal && (
+          <div id="fw-event-details-modal" className="fw-modal-backdrop" onClick={() => setSelectedEventModal(null)}>
+            <div className="fw-event-modal" onClick={e => e.stopPropagation()}>
+              <div style={{ padding: '20px', borderBottom: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div>
+                  <span className={`fw-event-badge fw-badge-${selectedEventModal.category}`} style={{ marginBottom: '8px' }}>
+                    {selectedEventModal.category}
+                  </span>
+                  <h3 id="fw-modal-event-title" style={{ margin: '4px 0 0', fontSize: '18px', fontWeight: 800, color: 'var(--color-text-primary)' }}>
+                    {selectedEventModal.title}
+                  </h3>
+                  <div style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginTop: '4px' }}>
+                    🏛️ {selectedEventModal.sourceName}
+                  </div>
+                </div>
+                <button
+                  id="fw-modal-close-btn"
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => setSelectedEventModal(null)}
+                  style={{ fontSize: '16px', lineHeight: 1 }}
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', background: 'var(--color-bg-secondary)', padding: '14px', borderRadius: '10px' }}>
+                  <div>
+                    <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)', fontWeight: 600, textTransform: 'uppercase' }}>
+                      Registration Deadline
+                    </div>
+                    <div id="fw-modal-deadline" style={{ fontSize: '14px', fontWeight: 700, color: '#dc2626', marginTop: '2px' }}>
+                      {selectedEventModal.deadlineDate || 'Open / Rolling'}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)', fontWeight: 600, textTransform: 'uppercase' }}>
+                      Event Dates &amp; Schedule
+                    </div>
+                    <div id="fw-modal-event-date" style={{ fontSize: '14px', fontWeight: 700, color: 'var(--color-text-primary)', marginTop: '2px' }}>
+                      {selectedEventModal.eventDate || 'Schedule Announced on Portal'}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)', fontWeight: 600, textTransform: 'uppercase' }}>
+                      Event Mode &amp; Venue
+                    </div>
+                    <div id="fw-modal-mode" style={{ fontSize: '14px', fontWeight: 700, color: 'var(--color-text-primary)', marginTop: '2px', textTransform: 'capitalize' }}>
+                      🌐 {selectedEventModal.locationMode || 'Online'}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)', fontWeight: 600, textTransform: 'uppercase' }}>
+                      Eligibility
+                    </div>
+                    <div id="fw-modal-eligibility" style={{ fontSize: '14px', fontWeight: 700, color: 'var(--color-text-primary)', marginTop: '2px' }}>
+                      👥 {selectedEventModal.eligibility === 'students' ? 'Students Only' : 'Open to All'}
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 style={{ margin: '0 0 6px', fontSize: '14px', fontWeight: 700, color: 'var(--color-text-primary)' }}>
+                    Event Overview &amp; Guidelines
+                  </h4>
+                  <p id="fw-modal-description" style={{ margin: 0, fontSize: '13px', lineHeight: 1.5, color: 'var(--color-text-secondary)' }}>
+                    {selectedEventModal.description}
+                  </p>
+                </div>
+              </div>
+
+              <div style={{ padding: '16px 20px', borderTop: '1px solid var(--color-border)', display: 'flex', justifyContent: 'flex-end', gap: '10px', flexWrap: 'wrap' }}>
+                <button
+                  id="fw-modal-bookmark-btn"
+                  className={`btn btn-sm ${savedEvents.some(s => s.id === selectedEventModal.id || s.title === selectedEventModal.title) ? 'btn-primary' : 'btn-secondary'}`}
+                  onClick={() => handleToggleBookmark(selectedEventModal)}
+                >
+                  {savedEvents.some(s => s.id === selectedEventModal.id || s.title === selectedEventModal.title)
+                    ? '✓ Bookmarked'
+                    : '🔖 Bookmark Event'}
+                </button>
+
+                {selectedEventModal.registrationUrl && (
+                  <a
+                    id="fw-modal-official-link"
+                    href={selectedEventModal.registrationUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-primary btn-sm"
+                  >
+                    Open Official Portal ↗
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ── Open with Buddy Guide Modal ── */}
         {guideModal && (

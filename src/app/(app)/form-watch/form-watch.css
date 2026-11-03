@@ -760,3 +760,160 @@
   color: #b91c1c;
 }
 
+/* ── Events & Opportunities Hub & Bookmarks ── */
+.fw-ecosystem-nav {
+  display: flex;
+  gap: 10px;
+  margin-bottom: var(--space-lg);
+  flex-wrap: wrap;
+}
+
+.fw-event-filters-bar {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+  background: var(--color-bg-secondary);
+  padding: 12px 16px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  margin-bottom: var(--space-md);
+}
+
+.fw-event-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.fw-event-card {
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 14px;
+  box-shadow: 0 4px 12px rgba(53, 4, 7, 0.04);
+  transition: all var(--transition-fast);
+}
+
+.fw-event-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--color-accent);
+  box-shadow: 0 8px 24px rgba(89, 9, 7, 0.1);
+}
+
+.fw-event-badge {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.fw-badge-hackathon {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+.fw-badge-competition {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.fw-badge-tech_fest {
+  background: #ede9fe;
+  color: #5b21b6;
+}
+
+.fw-badge-internship {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.fw-badge-job_fair {
+  background: #ffedd5;
+  color: #9a3412;
+}
+
+.fw-badge-conference {
+  background: #e0f2fe;
+  color: #075985;
+}
+
+.fw-badge-scholarship {
+  background: #fae8ff;
+  color: #86198f;
+}
+
+.fw-badge-admission {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.fw-event-deadline-chip {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: #fee2e2;
+  color: #991b1b;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.fw-event-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-border);
+}
+
+/* Event Details Modal */
+.fw-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(41, 33, 31, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.fw-event-modal {
+  background: #ffffff;
+  border-radius: 16px;
+  max-width: 620px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 50px rgba(53, 4, 7, 0.35);
+  border: 1px solid #e2d8cb;
+  display: flex;
+  flex-direction: column;
+}
+
+.fw-toast-banner {
+  background: #590907;
+  color: #ffffff;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  animation: slideDown 0.25s ease;
+}
+
+

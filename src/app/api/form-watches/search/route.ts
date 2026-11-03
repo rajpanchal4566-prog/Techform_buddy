@@ -236,7 +236,10 @@ async function handleSearch(rawQuery: string) {
     qLower.includes('cuet') ||
     qLower.includes('exam') ||
     qLower.includes('yojana') ||
-    qLower === 'jobs';
+    qLower === 'jobs' ||
+    qLower.includes('internship') ||
+    qLower.includes('fair') ||
+    qLower.includes('techfest');
   let broadCategories: BroadCategoryFilter[] = [];
 
   if (isBroad) {
@@ -255,6 +258,24 @@ async function handleSearch(rawQuery: string) {
         {
           key: 'deadlineDays',
           label: 'Deadline Range',
+          options: ['Any time', 'Within 7 days', 'Within 15 days', 'Within 30 days'],
+        },
+      ];
+    } else if (qLower.includes('internship') || qLower.includes('job') || qLower.includes('fair') || qLower.includes('techfest')) {
+      broadCategories = [
+        {
+          key: 'mode',
+          label: 'Opportunity Type',
+          options: ['All Opportunities', 'Virtual / Remote', 'On-Site / Campus', 'Apprenticeship Drive'],
+        },
+        {
+          key: 'studentEligible',
+          label: 'Applicant Eligibility',
+          options: ['All Candidates', 'Students / Freshers Only', 'Graduates / Diploma'],
+        },
+        {
+          key: 'deadlineDays',
+          label: 'Application Window',
           options: ['Any time', 'Within 7 days', 'Within 15 days', 'Within 30 days'],
         },
       ];

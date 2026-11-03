@@ -35,4 +35,31 @@ test('Capture Evidence Screenshots', async ({ page }) => {
   await page.goto('http://localhost:3000/dashboard');
   await page.waitForTimeout(1000);
   await page.screenshot({ path: 'C:/Users/ACER/.gemini/antigravity/brain/41d46163-53c9-4fe5-842a-281fed7651e6/evidence/dashboard-current.png' });
+
+  // Mock session for Form Watch
+  await page.route('**/api/auth/session', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        user: { id: 'ce93fcbf-0795-4774-9d9e-e24bbb5e9483', name: 'Raj Panchal', email: 'rajpanchal4566@gmail.com' },
+        expires: '2099-01-01T00:00:00.000Z',
+      }),
+    });
+  });
+
+  // 7. Form Watch Active Watches View
+  await page.goto('http://localhost:3000/form-watch');
+  await page.waitForTimeout(1200);
+  await page.screenshot({ path: 'C:/Users/ACER/.gemini/antigravity/brain/41d46163-53c9-4fe5-842a-281fed7651e6/evidence/form-watch-active.png' });
+
+  // 8. Form Watch Events Hub View
+  await page.locator('#fw-view-events').click();
+  await page.waitForTimeout(800);
+  await page.screenshot({ path: 'C:/Users/ACER/.gemini/antigravity/brain/41d46163-53c9-4fe5-842a-281fed7651e6/evidence/form-watch-events.png' });
+
+  // 9. Form Watch Saved Events View
+  await page.locator('#fw-view-saved').click();
+  await page.waitForTimeout(800);
+  await page.screenshot({ path: 'C:/Users/ACER/.gemini/antigravity/brain/41d46163-53c9-4fe5-842a-281fed7651e6/evidence/form-watch-saved.png' });
 });

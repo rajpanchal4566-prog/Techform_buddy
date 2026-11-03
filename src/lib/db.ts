@@ -262,6 +262,34 @@ function initializeDatabase(db: Database.Database) {
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     );
     CREATE INDEX IF NOT EXISTS idx_password_resets_email ON password_resets(email);
+
+    -- Form Watch: Saved and Bookmarked Events & Opportunities
+    CREATE TABLE IF NOT EXISTS saved_events (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      event_id TEXT,
+      title TEXT NOT NULL,
+      category TEXT NOT NULL,
+      event_type TEXT DEFAULT 'event',
+      source_name TEXT,
+      source_url TEXT,
+      event_date TEXT,
+      deadline_date TEXT,
+      location_mode TEXT DEFAULT 'online',
+      location_venue TEXT,
+      registration_url TEXT,
+      details_json TEXT,
+      reminder_set INTEGER DEFAULT 0,
+      reminder_date TEXT,
+      notes TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_saved_events_user_title
+      ON saved_events(user_id, title);
+    CREATE INDEX IF NOT EXISTS idx_saved_events_user_category
+      ON saved_events(user_id, category);
   `);
 
   runUserColumnMigrations(db);
@@ -271,7 +299,9 @@ function initializeDatabase(db: Database.Database) {
   runEmailVerificationMigrations(db);
   runGrievanceMigrations(db);
   runApplicationMigrations(db);
+  runSavedEventsMigrations(db);
   seedWatchSources(db);
+  seedInitialEventNotices(db);
 }
 
 /**
@@ -937,6 +967,74 @@ function seedWatchSources(db: Database.Database) {
       is_verified: 1,
       check_interval: 60,
     },
+    {
+      id: 'src-aicte-internships',
+      name: 'AICTE National Internship Portal',
+      aliases: JSON.stringify([
+        'AICTE Internships',
+        'Internship Portal',
+        'Technical Internships',
+        'Student Internships',
+        'Engineering Internships',
+        'Virtual Internship',
+        'Stipend'
+      ]),
+      url: 'https://internship.aicte-india.org/',
+      domain: 'internship.aicte-india.org',
+      type: 'html',
+      state: null,
+      category: 'internship',
+      description: 'Official AICTE portal for verified industry internships, virtual internships, corporate challenges, and government research stipends.',
+      monitored_types: JSON.stringify(['registration_open', 'deadline', 'new_event']),
+      is_verified: 1,
+      check_interval: 3600,
+    },
+    {
+      id: 'src-ncs-jobfairs',
+      name: 'National Career Service (NCS) Job Fairs & Opportunities',
+      aliases: JSON.stringify([
+        'NCS',
+        'National Career Service',
+        'Job Fair',
+        'Job Fairs',
+        'Apprenticeship',
+        'Employment Exchange',
+        'Campus Drive',
+        'Rozgar Mela'
+      ]),
+      url: 'https://www.ncs.gov.in/job-fair',
+      domain: 'ncs.gov.in',
+      type: 'html',
+      state: null,
+      category: 'job_fair',
+      description: 'Ministry of Labour & Employment nationwide job fairs, campus drives, apprenticeship melas, and employment opportunities.',
+      monitored_types: JSON.stringify(['registration_open', 'deadline', 'new_event']),
+      is_verified: 1,
+      check_interval: 3600,
+    },
+    {
+      id: 'src-ieee-acm-events',
+      name: 'National Tech Fests, Competitions & Conferences (IEEE & ACM India)',
+      aliases: JSON.stringify([
+        'Tech Fest',
+        'Technical Competition',
+        'IEEE India',
+        'ACM India',
+        'Student Conference',
+        'Workshop',
+        'College Fest',
+        'Robotics'
+      ]),
+      url: 'https://ieee.org/conferences_events',
+      domain: 'ieee.org',
+      type: 'html',
+      state: null,
+      category: 'conference',
+      description: 'Premier student technical conferences, hackathons, robotics competitions, technical paper presentations, and research workshops.',
+      monitored_types: JSON.stringify(['registration_open', 'deadline', 'new_event']),
+      is_verified: 1,
+      check_interval: 7200,
+    },
   ];
 
   for (const s of sources) {
@@ -955,3 +1053,229 @@ function seedWatchSources(db: Database.Database) {
     }
   }
 }
+
+/**
+ * Migration: Ensures saved_events table and required columns exist.
+ */
+function runSavedEventsMigrations(db: Database.Database) {
+  try {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS saved_events (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        event_id TEXT,
+        title TEXT NOT NULL,
+        category TEXT NOT NULL,
+        event_type TEXT DEFAULT 'event',
+        source_name TEXT,
+        source_url TEXT,
+        event_date TEXT,
+        deadline_date TEXT,
+        location_mode TEXT DEFAULT 'online',
+        location_venue TEXT,
+        registration_url TEXT,
+        details_json TEXT,
+        reminder_set INTEGER DEFAULT 0,
+        reminder_date TEXT,
+        notes TEXT,
+        created_at TEXT DEFAULT (datetime('now')),
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      );
+
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_saved_events_user_title
+        ON saved_events(user_id, title);
+      CREATE INDEX IF NOT EXISTS idx_saved_events_user_category
+        ON saved_events(user_id, category);
+    `);
+  } catch (err) {
+    console.error('Error running saved_events migrations:', err);
+  }
+}
+
+/**
+ * Seed: Populates initial verified upcoming events & hackathons into watch_notices
+ * so event discovery, deadline checking, and details are immediately functional.
+ */
+function seedInitialEventNotices(db: Database.Database) {
+  try {
+    const initialNotices = [
+      {
+        id: 'notice-sih-2026-finale',
+        source_id: 'src-sih',
+        title: 'Smart India Hackathon 2026 — Hardware & Software Grand Finale Registration Open',
+        link: 'https://sih.gov.in/sih2026',
+        notice_date: '2026-10-20',
+        classification: 'registration_open',
+        deadline_date: '2026-11-20',
+        location_mode: 'hybrid',
+        eligibility: 'students',
+        content_hash: 'hash-sih-2026-finale',
+        raw_text: 'Smart India Hackathon 2026 official registration window for student teams across India. Problem statements released by central ministries and industry partners with grand cash prizes.',
+      },
+      {
+        id: 'notice-aicte-mic-challenge',
+        source_id: 'src-aicte-mic',
+        title: "AICTE - MoE's Innovation Cell (MIC) — National Student Innovation Challenge & Toycathon 2026",
+        link: 'https://mic.gov.in/innovation-challenge',
+        notice_date: '2026-10-25',
+        classification: 'new_event',
+        deadline_date: '2026-11-25',
+        location_mode: 'online',
+        eligibility: 'students',
+        content_hash: 'hash-aicte-mic-challenge',
+        raw_text: 'National competition for students and young innovators to present cybersecurity prototypes and innovative educational solutions.',
+      },
+      {
+        id: 'notice-mlh-ghw-2026',
+        source_id: 'src-mlh-events',
+        title: 'Major League Hacking Season 2026 — Global Hack Week & Developer Sprint',
+        link: 'https://mlh.io/seasons/2026/events',
+        notice_date: '2026-10-28',
+        classification: 'registration_open',
+        deadline_date: '2026-11-18',
+        location_mode: 'online',
+        eligibility: 'all',
+        content_hash: 'hash-mlh-ghw-2026',
+        raw_text: 'Week-long worldwide student hackathon festival with workshops, mentoring sessions, and open-source project showcases.',
+      },
+      {
+        id: 'notice-aicte-internship-2026',
+        source_id: 'src-aicte-internships',
+        title: 'AICTE Virtual Tech Internship 2026 — Cloud Computing & AI Cohort',
+        link: 'https://internship.aicte-india.org/cloud-internship',
+        notice_date: '2026-11-01',
+        classification: 'registration_open',
+        deadline_date: '2026-11-30',
+        location_mode: 'online',
+        eligibility: 'students',
+        content_hash: 'hash-aicte-internship-2026',
+        raw_text: 'AICTE sponsored virtual technology internship program for engineering and polytechnic students with industry mentorship and stipend certificate.',
+      },
+      {
+        id: 'notice-ncs-jobfair-2026',
+        source_id: 'src-ncs-jobfairs',
+        title: 'National Career Service (NCS) — Mega National Job Fair & Campus Recruitment Drive',
+        link: 'https://www.ncs.gov.in/job-fair',
+        notice_date: '2026-11-01',
+        classification: 'new_event',
+        deadline_date: '2026-12-10',
+        location_mode: 'offline',
+        eligibility: 'all',
+        content_hash: 'hash-ncs-jobfair-2026',
+        raw_text: 'National job fair organized across major state centers featuring 150+ IT, manufacturing, and public sector participating employers.',
+      },
+      {
+        id: 'notice-ieee-techfest-2026',
+        source_id: 'src-ieee-acm-events',
+        title: 'IEEE India Student Tech Fest & National Robotics Competition 2026',
+        link: 'https://ieee.org/conferences_events',
+        notice_date: '2026-11-02',
+        classification: 'new_event',
+        deadline_date: '2026-12-15',
+        location_mode: 'hybrid',
+        eligibility: 'all',
+        content_hash: 'hash-ieee-techfest-2026',
+        raw_text: 'Inter-college technical festival featuring autonomous robotics, paper presentations, AI hackathons, and technical workshops.',
+      },
+    ];
+
+    for (const n of initialNotices) {
+      db.prepare(`
+        INSERT OR IGNORE INTO watch_notices (
+          id, source_id, title, link, notice_date, classification, deadline_date,
+          location_mode, eligibility, content_hash, raw_text
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        n.id, n.source_id, n.title, n.link, n.notice_date, n.classification, n.deadline_date,
+        n.location_mode, n.eligibility, n.content_hash, n.raw_text
+      );
+    }
+  } catch (err) {
+    console.error('Error seeding initial event notices:', err);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Saved & Bookmarked Events Helpers (Form Watch Events & Opportunities)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface SavedEventRow {
+  id: string;
+  user_id: string;
+  event_id?: string | null;
+  title: string;
+  category: string;
+  event_type: string;
+  source_name?: string | null;
+  source_url?: string | null;
+  event_date?: string | null;
+  deadline_date?: string | null;
+  location_mode?: string | null;
+  location_venue?: string | null;
+  registration_url?: string | null;
+  details_json?: string | null;
+  reminder_set: number;
+  reminder_date?: string | null;
+  notes?: string | null;
+  created_at: string;
+}
+
+export function saveEvent(userId: string, event: Partial<SavedEventRow>): SavedEventRow {
+  const db = getDb();
+  const id = event.id || generateId();
+  const title = (event.title || 'Untitled Event').trim();
+  const category = event.category || 'hackathon';
+  const eventType = event.event_type || 'event';
+  const sourceName = event.source_name || 'Official Portal';
+  const sourceUrl = event.source_url || '';
+  const eventDate = event.event_date || null;
+  const deadlineDate = event.deadline_date || null;
+  const locationMode = event.location_mode || 'online';
+  const locationVenue = event.location_venue || null;
+  const registrationUrl = event.registration_url || sourceUrl;
+  const detailsJson = event.details_json || null;
+  const reminderSet = event.reminder_set ? 1 : 0;
+  const reminderDate = event.reminder_date || deadlineDate;
+  const notes = event.notes || null;
+
+  db.prepare(`
+    INSERT INTO saved_events (
+      id, user_id, event_id, title, category, event_type, source_name, source_url,
+      event_date, deadline_date, location_mode, location_venue, registration_url,
+      details_json, reminder_set, reminder_date, notes
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(user_id, title) DO UPDATE SET
+      category = excluded.category,
+      source_name = excluded.source_name,
+      source_url = excluded.source_url,
+      event_date = excluded.event_date,
+      deadline_date = excluded.deadline_date,
+      location_mode = excluded.location_mode,
+      registration_url = excluded.registration_url,
+      reminder_set = excluded.reminder_set
+  `).run(
+    id, userId, event.event_id || null, title, category, eventType, sourceName, sourceUrl,
+    eventDate, deadlineDate, locationMode, locationVenue, registrationUrl,
+    detailsJson, reminderSet, reminderDate, notes
+  );
+
+  return db.prepare('SELECT * FROM saved_events WHERE user_id = ? AND title = ?').get(userId, title) as SavedEventRow;
+}
+
+export function getSavedEvents(userId: string): SavedEventRow[] {
+  const db = getDb();
+  return db.prepare('SELECT * FROM saved_events WHERE user_id = ? ORDER BY created_at DESC').all(userId) as SavedEventRow[];
+}
+
+export function deleteSavedEvent(userId: string, idOrTitle: string): boolean {
+  const db = getDb();
+  const res = db.prepare('DELETE FROM saved_events WHERE user_id = ? AND (id = ? OR title = ?)').run(userId, idOrTitle, idOrTitle);
+  return res.changes > 0;
+}
+
+export function toggleEventReminder(userId: string, id: string, reminderSet: boolean): boolean {
+  const db = getDb();
+  const res = db.prepare('UPDATE saved_events SET reminder_set = ? WHERE user_id = ? AND id = ?').run(reminderSet ? 1 : 0, userId, id);
+  return res.changes > 0;
+}
+

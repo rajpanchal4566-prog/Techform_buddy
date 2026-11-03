@@ -95,6 +95,86 @@ const SAMPLE_DISCOVERIES: Record<string, DiscoveredNotice[]> = {
       classification: 'notification',
     },
   ],
+  sih: [
+    {
+      id: 'sih-finale-2026',
+      title: 'Smart India Hackathon 2026 — Hardware & Software Grand Finale Registration Open',
+      date: '2026-10-20',
+      link: 'https://sih.gov.in/sih2026',
+      classification: 'application_open',
+    },
+    {
+      id: 'sih-problems-2026',
+      title: 'Smart India Hackathon 2026 — Ministry Problem Statements & Guidelines',
+      date: '2026-10-15',
+      link: 'https://sih.gov.in/problem-statements',
+      classification: 'notification',
+    },
+    {
+      id: 'sih-eval-schedule',
+      title: 'Smart India Hackathon 2026 — Internal Campus Hackathon Evaluation Schedule',
+      date: '2026-10-10',
+      link: 'https://sih.gov.in/guidelines',
+      classification: 'notification',
+    },
+  ],
+  aicte_mic: [
+    {
+      id: 'mic-challenge-2026',
+      title: "AICTE - MoE's Innovation Cell (MIC) — National Student Innovation Challenge & Toycathon 2026",
+      date: '2026-10-25',
+      link: 'https://mic.gov.in/innovation-challenge',
+      classification: 'application_open',
+    },
+    {
+      id: 'mic-kavach-2026',
+      title: "Kavach National Cybersecurity Hackathon 2026 — Track Announcements",
+      date: '2026-10-18',
+      link: 'https://mic.gov.in/kavach',
+      classification: 'notification',
+    },
+  ],
+  mlh: [
+    {
+      id: 'mlh-ghw-2026',
+      title: 'Major League Hacking Season 2026 — Global Hack Week & Developer Sprint',
+      date: '2026-10-28',
+      link: 'https://mlh.io/seasons/2026/events',
+      classification: 'application_open',
+    },
+    {
+      id: 'mlh-member-events',
+      title: 'Major League Hacking — Upcoming Student Hackathons & Virtual Workshops',
+      date: '2026-10-22',
+      link: 'https://mlh.io/events',
+      classification: 'notification',
+    },
+  ],
+  internships: [
+    {
+      id: 'aicte-cloud-internship',
+      title: 'AICTE Virtual Tech Internship 2026 — Cloud Computing & AI Cohort',
+      date: '2026-11-01',
+      link: 'https://internship.aicte-india.org/cloud-internship',
+      classification: 'application_open',
+    },
+    {
+      id: 'aicte-smart-city-internship',
+      title: 'TULIP Urban Learning Internship Program 2026 — Smart Cities Mission',
+      date: '2026-10-24',
+      link: 'https://internship.aicte-india.org/tulip',
+      classification: 'notification',
+    },
+  ],
+  jobfairs: [
+    {
+      id: 'ncs-mega-jobfair',
+      title: 'National Career Service (NCS) — Mega National Job Fair & Campus Recruitment Drive',
+      date: '2026-11-01',
+      link: 'https://www.ncs.gov.in/job-fair',
+      classification: 'application_open',
+    },
+  ],
 };
 
 export async function POST(request: NextRequest) {
@@ -144,7 +224,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const hasSpecificExams = discovered.some(d => d.title.toLowerCase().includes('state service examination') || d.title.toLowerCase().includes('civil services'));
+    const hasSpecificExams = discovered.some(d =>
+      d.title.toLowerCase().includes('state service examination') ||
+      d.title.toLowerCase().includes('civil services') ||
+      d.title.toLowerCase().includes('smart india hackathon')
+    );
     if (!hasSpecificExams) {
       const urlLower = targetUrl.toLowerCase();
       if (urlLower.includes('mppsc')) {
@@ -153,6 +237,16 @@ export async function POST(request: NextRequest) {
         discovered = [...SAMPLE_DISCOVERIES.upsc, ...discovered.filter(d => !SAMPLE_DISCOVERIES.upsc.some(s => s.id === d.id))];
       } else if (urlLower.includes('scholarship')) {
         discovered = [...SAMPLE_DISCOVERIES.nsp, ...discovered.filter(d => !SAMPLE_DISCOVERIES.nsp.some(s => s.id === d.id))];
+      } else if (urlLower.includes('sih.gov') || urlLower.includes('hackathon')) {
+        discovered = [...SAMPLE_DISCOVERIES.sih, ...discovered.filter(d => !SAMPLE_DISCOVERIES.sih.some(s => s.id === d.id))];
+      } else if (urlLower.includes('mic.gov')) {
+        discovered = [...SAMPLE_DISCOVERIES.aicte_mic, ...discovered.filter(d => !SAMPLE_DISCOVERIES.aicte_mic.some(s => s.id === d.id))];
+      } else if (urlLower.includes('mlh.io')) {
+        discovered = [...SAMPLE_DISCOVERIES.mlh, ...discovered.filter(d => !SAMPLE_DISCOVERIES.mlh.some(s => s.id === d.id))];
+      } else if (urlLower.includes('internship')) {
+        discovered = [...SAMPLE_DISCOVERIES.internships, ...discovered.filter(d => !SAMPLE_DISCOVERIES.internships.some(s => s.id === d.id))];
+      } else if (urlLower.includes('job-fair') || urlLower.includes('ncs.gov')) {
+        discovered = [...SAMPLE_DISCOVERIES.jobfairs, ...discovered.filter(d => !SAMPLE_DISCOVERIES.jobfairs.some(s => s.id === d.id))];
       }
     }
 
